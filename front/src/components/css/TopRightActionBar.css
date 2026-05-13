@@ -1,0 +1,46 @@
+.TopRightActionBar{
+  position: fixed;
+  display: flex;
+  margin-right: 25px;
+  margin-top: 0;
+  height: 50px;
+  width: 400px;
+  margin-top: 25px;
+  border-radius: 30px;
+  right: 0;
+  background-color: #EFEFEF;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+.TUXTooltip-reference button{
+  display: flex;
+  justify-content: center;
+  border: none;
+  flex-wrap: nowrap;
+  align-items: center;
+  width: 100%;
+  padding: 0 0;
+  gap: 3px;
+
+}
+
+.TUXTooltip-reference span{
+    /* cho nó hiện ... */
+  white-space: nowrap; 
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: 14px;
+}
+
+.TUXButton-iconContainer{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.TUXButton-iconContainer .ImgAvatar{
+  width: 40px;
+  height: 25px;
+  margin: auto;
+  border-radius: 50%;
+}

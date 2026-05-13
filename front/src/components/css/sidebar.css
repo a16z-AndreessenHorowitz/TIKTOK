@@ -1,0 +1,61 @@
+
+.sidebar .image__logo{
+  padding-bottom: 15px;
+}
+.sidebar .box_search__search{
+  font-size: 20px;
+  color:#9e9a9a;
+  margin-top: 5px;
+  margin-left: 5px;
+
+
+}
+.sidebar .box_search__input{
+  width: 210px;
+  height: 40px;
+  padding-left: 25px;
+  border-radius: 20px;
+  border:1px solid #9e9a9a;
+    margin-bottom: 10px;
+      background-color: #ddd;  
+}
+.sidebar .DivMainNavContainer .box_ul{
+  list-style: none;
+  padding: 0;
+}
+.sidebar .DivMainNavContainer .box_ul a{
+    text-decoration: none;
+    color:#000;
+}
+.sidebar .DivMainNavContainer .box_ul li{
+  padding:3px;
+  font-size: 16px;
+  height: 40px;
+  margin-bottom: 5px;
+}
+.sidebar .DivMainNavContainer .box_ul li:hover{
+  background-color: #ddd ;
+}
+.sidebar .DivMainNavContainer .box_ul li:last-child{
+  margin-bottom: 2px;
+}
+.sidebar .box_login .btn{
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.sidebar .DivFooterContainer ul {
+  padding: 0;
+  list-style: none;
+}
+.sidebar .DivFooterContainer ul li{
+  margin-bottom: 3px;
+}
+.sidebar .DivFooterContainer ul li a{
+  text-decoration: none;
+  color:#8A8B90;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+

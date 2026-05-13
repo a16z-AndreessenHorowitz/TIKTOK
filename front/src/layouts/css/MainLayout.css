@@ -1,0 +1,20 @@
+
+.sidebar{
+  width: 240px;
+  height: 100vh; 
+  padding-top: 17px;
+  padding-left: 20px;
+  position: fixed;
+}
+.content{
+  margin-left: 240px;
+  padding: 0px;
+  width: calc(100% - 240px);
+  height: 100dvh;
+  overflow: hidden;
+  position: relative
+}
+.content-inner {
+  width: 90%;        /* 🔥 chừa 10% */
+  max-width: 1200px; /* optional cho đẹp desktop */
+}
