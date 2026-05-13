@@ -201,17 +201,28 @@
 import { useEffect, useState, useRef } from "react";
 import "../assets/styles/home.css";
 
+/** Khóa list React — id có thể trùng/null */
+function clipListKey(video, index) {
+  return `${video?.id ?? "na"}:${index}`;
+}
+
 export default function Home() {
   const [videos, setVideos] = useState([]);
-  const [muted, setMuted] = useState(true);
-  const [volume, setVolume] = useState(0.8);
+  /** Một lần bật/tắt tiếng & mức volume cho cả feed (giống TikTok) */
+  const [feedAudio, setFeedAudio] = useState({
+    volume: 0.8,
+    muted: true,
+    lastVolume: 0.8,
+  });
   const [activeIndex, setActiveIndex] = useState(0);
-  const [lastVolume,setLastVolume] = useState(0.8);
-
-
 
   const containerRef = useRef(null);
   const videoRefs = useRef([]);
+  const feedAudioRef = useRef(feedAudio);
+
+  useEffect(() => {
+    feedAudioRef.current = feedAudio;
+  }, [feedAudio]);
 
   // =========================
   // FETCH DATA
@@ -247,8 +258,10 @@ export default function Home() {
 
             setActiveIndex(index);
 
-            video.muted = muted;
-            video.volume = volume;
+            const a = feedAudioRef.current;
+
+            video.volume = a.volume;
+            video.muted = a.muted;
 
             video.play().catch(() => {});
           } else {
@@ -267,52 +280,38 @@ export default function Home() {
     });
 
     return () => observer.disconnect();
-  }, [videos, muted, volume]);
+  }, [videos]);
 
-  // =========================
-  // 🔊 TOGGLE SOUND
-  // =========================
+  useEffect(() => {
+    const el = videoRefs.current[activeIndex];
+    if (!el) return;
+    el.volume = feedAudio.volume;
+    el.muted = feedAudio.muted;
+  }, [feedAudio, activeIndex, videos]);
+
   const toggleSound = () => {
-  const video = videoRefs.current[activeIndex];
-  if (!video) return;
+    setFeedAudio((prev) => {
+      if (prev.muted) {
+        const vol = prev.lastVolume > 0 ? prev.lastVolume : 0.8;
+        return { ...prev, muted: false, volume: vol };
+      }
+      return {
+        ...prev,
+        muted: true,
+        lastVolume: prev.volume > 0 ? prev.volume : prev.lastVolume,
+      };
+    });
+  };
 
-  if (muted) {
-    // UNMUTE → trả lại volume cũ
-    setMuted(false);
-    setVolume(lastVolume);
-
-    video.muted = false;
-    video.volume = lastVolume;
-  } else {
-    //  MUTE → lưu volume hiện tại
-    setLastVolume(volume);
-    setMuted(true);
-    setVolume(0);
-
-    video.muted = true;
-    video.volume = 0;
-  }
-};
-
-  // =========================
-  //  CHANGE VOLUME
-  // =========================
   const handleVolumeChange = (e) => {
-  const v = parseFloat(e.target.value);
-  setVolume(v);
-
-  const video = videoRefs.current[activeIndex];
-  if (!video) return;
-
-  video.volume = v;
-
-  if (v === 0) {
-    setMuted(true);
-  } else {
-    setMuted(false);
-    setLastVolume(v); // 🔥 cập nhật volume gần nhất
-  }
-};
+    const v = parseFloat(e.target.value);
+    setFeedAudio((prev) => ({
+      ...prev,
+      volume: v,
+      muted: v === 0,
+      lastVolume: v > 0 ? v : prev.lastVolume,
+    }));
+  };
 
   // =========================
   // EMPTY
@@ -343,9 +342,11 @@ export default function Home() {
       ref={containerRef}
       className="feed-container"
     >
-      {videos.map((video, index) => (
+      {videos.map((video, index) => {
+        const rowKey = clipListKey(video, index);
+        return (
         <div
-          key={video.id}
+          key={rowKey}
           className="feed-item"
         >
 
@@ -354,44 +355,47 @@ export default function Home() {
           >
           
           <div className="video-wrapper">
-                      <video
-            ref={(el) => (videoRefs.current[index] = el)}
-            src={video.videoUrl}
-            loop
-            playsInline
+            <div className="video-inner video">
+              <video
+                ref={(el) => (videoRefs.current[index] = el)}
+                src={video.videoUrl}
+                loop
+                playsInline
+                className="video-player"
+              />
 
-            className="video-player"
+              {/* Overlay âm lượng trong khung video (góc trên trái, giống TikTok) */}
+              <div className="volume-box">
+                <button
+                  type="button"
+                  className="volume-box__btn"
+                  onClick={toggleSound}
+                  aria-label={feedAudio.muted ? "Bật tiếng" : "Tắt tiếng"}
+                >
+                  {feedAudio.muted ? (
+                    <i className="fa-solid fa-volume-xmark" aria-hidden />
+                  ) : (
+                    <i className="fa-solid fa-volume-high" aria-hidden />
+                  )}
+                </button>
 
-          />
-
-          {/* 🔊 VOLUME CONTROL */}
-          <div
-            className="volume-box"
-          >
-            {/* BUTTON */}
-            <button onClick={toggleSound}>
-              {muted ? (
-                <i className="fa-solid fa-volume-xmark"></i>
-              ) : (
-                <i className="fa-solid fa-volume-high"></i>
-              )}
-            </button>
-
-            {/* RANGE */}
-            <input
-              className="volume-range"
-              type="range"
-              min="0"
-              max="1"
-              step="0.1"
-              value={volume}
-              onChange={handleVolumeChange}
-            />
-          </div>
+                <input
+                  className="volume-range"
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={feedAudio.volume}
+                  onChange={handleVolumeChange}
+                  aria-label="Âm lượng"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
