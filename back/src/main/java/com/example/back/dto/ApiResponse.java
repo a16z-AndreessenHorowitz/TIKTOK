@@ -1,53 +1,25 @@
 package com.example.back.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/** Envelope JSON dùng chung: mọi API trả {@code status}, {@code message}, payload trong {@code data}. */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class ApiResponse<T> {
 
-    private int status;
-    private String message;
-    private T data;
+  private int status;
+  private String message;
+  private T data;
 
-    // ✅ Thành công có data
-    public static <T> ApiResponse<T> success(T data) {
-        return ApiResponse.<T>builder()
-                .status(200)
-                .message("Success")
-                .data(data)
-                .build();
-    }
-
-    // ✅ Thành công có message tùy chỉnh
-    public static <T> ApiResponse<T> success(String message, T data) {
-        return ApiResponse.<T>builder()
-                .status(200)
-                .message(message)
-                .data(data)
-                .build();
-    }
-
-    // ✅ Tạo mới thành công (201)
-    public static <T> ApiResponse<T> created(T data) {
-        return ApiResponse.<T>builder()
-                .status(201)
-                .message("Created successfully")
-                .data(data)
-                .build();
-    }
-
-    // ✅ Lỗi
-    public static <T> ApiResponse<T> error(int status, String message) {
-        return ApiResponse.<T>builder()
-                .status(status)
-                .message(message)
-                .data(null)
-                .build();
-    }
+  public static <T> ApiResponse<T> of(int status, String message, T data) {
+    return ApiResponse.<T>builder().status(status).message(message).data(data).build();
+  }
 }

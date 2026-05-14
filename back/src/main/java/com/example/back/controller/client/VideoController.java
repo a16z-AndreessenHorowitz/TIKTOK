@@ -1,6 +1,5 @@
 package com.example.back.controller.client;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,7 +19,7 @@ public class VideoController {
   private final VideoService videoService;
 
   @GetMapping("/feed")
-  public ResponseEntity<ApiResponse<List<VideosResponseDTO>>> getVideoFeed() {
-    return ResponseEntity.ok(ApiResponse.success(videoService.getFeed()));
+  public ApiResponse<List<VideosResponseDTO>> getVideoFeed() {
+    return ApiResponse.of(200, "Success", videoService.getFeed());
   }
 }

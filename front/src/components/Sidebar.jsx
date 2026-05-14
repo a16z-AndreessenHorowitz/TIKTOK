@@ -1,6 +1,461 @@
+import { useEffect, useMemo, useState } from "react"
+import { createPortal } from "react-dom"
 import "./css/sidebar.css"
-export default function Sidebar() {
 
+function IconQr() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M4 4h7v7H4V4Zm2 2v3h3V6H6Zm9-2h7v7h-7V4Zm2 2v3h3V6h-3ZM4 13h7v7H4v-7Zm2 2v3h3v-3H6Zm4-2h2v2h-2v-2Zm4 0h2v2h-2v-2Zm-4 4h2v2h-2v-2Zm2 2h2v2h-2v-2Zm2-2h2v2h-2v-2Zm4 2h2v4h-2v-4Zm-2 0h2v2h-2v-2Z" />
+    </svg>
+  )
+}
+
+function IconUser() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 48 48" fill="currentColor" aria-hidden>
+      <path d="M24 3a10 10 0 1 1 0 20 10 10 0 0 1 0-20Zm0 4a6 6 0 1 0 0 12A6 6 0 0 0 24 7Zm0 19c10.3 0 16.67 6.99 17 17 .02.55-.43 1-1 1h-2c-.54 0-.98-.45-1-1-.3-7.84-4.9-13-13-13s-12.7 5.16-13 13c-.02.55-.46 1-1.02 1h-2c-.55 0-1-.45-.98-1 .33-10.01 6.7-17 17-17Z" />
+    </svg>
+  )
+}
+
+function IconFacebook() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden>
+      <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+    </svg>
+  )
+}
+
+function IconGoogle() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden>
+      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+    </svg>
+  )
+}
+
+function IconLine() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden>
+      <path fill="#06C755" d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 19.075 0 12.791 0H11.21C4.925 0 0 4.943 0 10.314c0 5.071 4.584 9.275 10.5 9.275h.75l2.25 3.75c.15.225.375.375.675.375.45 0 .825-.375.825-.825V19.59c5.916-.6 10.5-5.204 10.5-10.276" />
+    </svg>
+  )
+}
+
+function IconKakao() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden>
+      <path
+        fill="#FEE500"
+        d="M12 3C6.58 3 2 6.45 2 10.75c0 2.35 1.55 4.42 3.9 5.55l-.65 2.45c-.09.32.19.6.5.45l2.9-1.55c.78.15 1.6.23 2.35.23 5.42 0 10-3.45 10-7.75S17.42 3 12 3Z"
+      />
+      <path
+        fill="#3C1E1E"
+        d="M7.5 9.75h1.1v2.5H7.5v-2.5Zm2.65 0h1l1.15 1.85L13.45 9.75h1v2.5h-1v-1.65l-.85 1.3h-.65l-.85-1.3v1.65h-1v-2.5Zm4.35 0H16v2.5h-1v-.95h-.9v.95h-1v-2.5Z"
+      />
+    </svg>
+  )
+}
+
+function IconApple() {
+  return (
+    <svg width="20" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+    </svg>
+  )
+}
+
+const SIGNUP_OPTIONS = [
+  {
+    id: "phone",
+    label: "Sử dụng số điện thoại hoặc email",
+    icon: "user",
+    action: "email",
+  },
+  { id: "facebook", label: "Tiếp tục với Facebook", icon: "facebook" },
+  { id: "google", label: "Tiếp tục với Google", icon: "google" },
+  { id: "line", label: "Tiếp tục với LINE", icon: "line" },
+  { id: "kakao", label: "Tiếp tục với KakaoTalk", icon: "kakao" },
+  { id: "apple", label: "Tiếp tục với Apple", icon: "apple" },
+]
+
+const LOGIN_OPTIONS = [
+  { id: "qr", label: "Sử dụng mã QR", icon: "qr" },
+  { id: "phone", label: "Số điện thoại / Email / Tên người dùng", icon: "user" },
+  { id: "facebook", label: "Tiếp tục với Facebook", icon: "facebook", lastLogin: true },
+  { id: "google", label: "Tiếp tục với Google", icon: "google" },
+  { id: "line", label: "Tiếp tục với LINE", icon: "line" },
+  { id: "kakao", label: "Tiếp tục với KakaoTalk", icon: "kakao" },
+  { id: "apple", label: "Tiếp tục với Apple", icon: "apple" },
+]
+
+const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
+  value: String(i + 1),
+  label: `Tháng ${i + 1}`,
+}))
+
+const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => ({
+  value: String(i + 1),
+  label: String(i + 1),
+}))
+
+function buildYearOptions() {
+  const y = new Date().getFullYear()
+  const out = []
+  for (let i = 0; i < 100; i += 1) out.push({ value: String(y - i), label: String(y - i) })
+  return out
+}
+
+function SignupEmailView({ onBack, onPickPhone, onRegisterSuccess }) {
+  const yearOptions = useMemo(() => buildYearOptions(), [])
+  const [month, setMonth] = useState("")
+  const [day, setDay] = useState("")
+  const [year, setYear] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPw, setShowPw] = useState(false)
+  const [consent, setConsent] = useState(false)
+  const [registerLoading, setRegisterLoading] = useState(false)
+  const [registerError, setRegisterError] = useState("")
+
+  const canContinue =
+    month &&
+    day &&
+    year &&
+    email.trim().length > 0 &&
+    password.length >= 6 &&
+    consent
+
+  async function handleRegister() {
+    if (!canContinue || registerLoading) return
+    setRegisterError("")
+    const birthDate = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+    setRegisterLoading(true)
+    try {
+      const res = await fetch("/api/v1/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          birthDate,
+        }),
+      })
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        const msg =
+          payload?.message ||
+          (res.status === 409 ? "Email đã được đăng ký" : "Đăng ký thất bại, vui lòng thử lại.")
+        setRegisterError(msg)
+        return
+      }
+      onRegisterSuccess?.()
+    } catch {
+      setRegisterError("Không kết nối được máy chủ. Hãy chạy backend và thử lại.")
+    } finally {
+      setRegisterLoading(false)
+    }
+  }
+
+  return (
+    <div className="signup-email">
+      <div className="signup-email__top">
+        <button
+          type="button"
+          className="signup-email__back"
+          aria-label="Quay lại"
+          onClick={onBack}
+        >
+          <i className="fa-solid fa-arrow-left" aria-hidden />
+        </button>
+        <h2 id="auth-modal-title" className="signup-email__heading">
+          Đăng ký
+        </h2>
+        <span className="signup-email__top-spacer" aria-hidden />
+      </div>
+
+      <div className="signup-email__scroll">
+        <div className="signup-email__block">
+          <p className="signup-email__label">Vui lòng cho biết ngày sinh của bạn.</p>
+          <div className="signup-email__dob-row">
+            <select
+              className="signup-email__select"
+              aria-label="Tháng"
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+            >
+              <option value="">Tháng</option>
+              {MONTH_OPTIONS.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+            <select
+              className="signup-email__select"
+              aria-label="Ngày"
+              value={day}
+              onChange={(e) => setDay(e.target.value)}
+            >
+              <option value="">Ngày</option>
+              {DAY_OPTIONS.map((d) => (
+                <option key={d.value} value={d.value}>
+                  {d.label}
+                </option>
+              ))}
+            </select>
+            <select
+              className="signup-email__select"
+              aria-label="Năm"
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+            >
+              <option value="">Năm</option>
+              {yearOptions.map((y) => (
+                <option key={y.value} value={y.value}>
+                  {y.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <p className="signup-email__hint">
+            Ngày sinh của bạn sẽ không được hiển thị công khai.
+          </p>
+        </div>
+
+        <div className="signup-email__block">
+          <div className="signup-email__row-title">
+            <span className="signup-email__email-title">Email</span>
+            <button type="button" className="signup-email__link" onClick={onPickPhone}>
+              Đăng ký bằng số điện thoại
+            </button>
+          </div>
+          <input
+            type="email"
+            className="signup-email__input"
+            placeholder="Địa chỉ email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <div className="signup-email__input-wrap">
+            <input
+              type={showPw ? "text" : "password"}
+              className="signup-email__input signup-email__input--has-suffix"
+              placeholder="Mật khẩu"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              className="signup-email__suffix-btn"
+              aria-label={showPw ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              onClick={() => setShowPw((v) => !v)}
+            >
+              <i className={showPw ? "fa-solid fa-eye-slash" : "fa-solid fa-eye"} aria-hidden />
+            </button>
+          </div>
+        </div>
+
+        <label className="signup-email__consent">
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={(e) => setConsent(e.target.checked)}
+          />
+          <span>
+            Nhận nội dung thịnh hành, bản tin, khuyến mại, đề xuất và thông tin cập nhật tài khoản
+            được gửi đến email của bạn
+          </span>
+        </label>
+
+        {registerError ? <p className="signup-email__error">{registerError}</p> : null}
+
+        <button
+          type="button"
+          className="signup-email__next"
+          disabled={!canContinue || registerLoading}
+          onClick={handleRegister}
+        >
+          {registerLoading ? "Đang xử lý…" : "Xác nhận"}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function LoginEmailView({ onBack, onPickPhone, onLoginSuccess }) {
+  const [identifier, setIdentifier] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPw, setShowPw] = useState(false)
+  const [loginLoading, setLoginLoading] = useState(false)
+  const [loginError, setLoginError] = useState("")
+
+  const canSubmit = identifier.trim().length > 0 && password.length > 0
+
+  async function handleLogin() {
+    if (!canSubmit || loginLoading) return
+    setLoginError("")
+    setLoginLoading(true)
+    try {
+      const res = await fetch("/api/v1/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identifier: identifier.trim(),
+          password,
+        }),
+      })
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setLoginError(payload?.message || "Đăng nhập thất bại.")
+        return
+      }
+      onLoginSuccess?.()
+    } catch {
+      setLoginError("Không kết nối được máy chủ.")
+    } finally {
+      setLoginLoading(false)
+    }
+  }
+
+  return (
+    <div className="signup-email signup-email--login">
+      <div className="signup-email__top">
+        <button
+          type="button"
+          className="signup-email__back"
+          aria-label="Quay lại"
+          onClick={onBack}
+        >
+          <i className="fa-solid fa-arrow-left" aria-hidden />
+        </button>
+        <h2 id="auth-modal-title" className="signup-email__heading">
+          Đăng nhập
+        </h2>
+        <span className="signup-email__top-spacer" aria-hidden />
+      </div>
+
+      <div className="signup-email__scroll">
+        <div className="signup-email__block">
+          <div className="signup-email__row-title">
+            <span className="signup-email__email-title">Email hoặc TikTok ID</span>
+            <button type="button" className="signup-email__link" onClick={onPickPhone}>
+              Đăng nhập bằng số điện thoại
+            </button>
+          </div>
+          <input
+            className="signup-email__input"
+            placeholder="Email hoặc TikTok ID"
+            autoComplete="username"
+            value={identifier}
+            onChange={(e) => {
+              setIdentifier(e.target.value)
+              setLoginError("")
+            }}
+          />
+          <div
+            className={`signup-email__input-wrap${loginError.trim() ? " signup-email__input-wrap--error" : ""}`}
+          >
+            <input
+              type={showPw ? "text" : "password"}
+              className="signup-email__input signup-email__input--has-suffix"
+              placeholder="Mật khẩu"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value)
+                setLoginError("")
+              }}
+            />
+            <button
+              type="button"
+              className="signup-email__suffix-btn"
+              aria-label={showPw ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              onClick={() => setShowPw((v) => !v)}
+            >
+              <i className={showPw ? "fa-solid fa-eye-slash" : "fa-solid fa-eye"} aria-hidden />
+            </button>
+          </div>
+          {loginError.trim() ? (
+            <p className="signup-email__error signup-email__error--inline" role="alert">
+              {loginError}
+            </p>
+          ) : null}
+          <button type="button" className="login-email__forgot">
+            Bạn quên mật khẩu?
+          </button>
+        </div>
+
+        <button
+          type="button"
+          className="signup-email__next"
+          disabled={!canSubmit || loginLoading}
+          onClick={handleLogin}
+        >
+          {loginLoading ? "Đang xử lý…" : "Đăng nhập"}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function LoginOptionIcon({ type }) {
+  switch (type) {
+    case "qr":
+      return <IconQr />
+    case "user":
+      return <IconUser />
+    case "facebook":
+      return <IconFacebook />
+    case "google":
+      return <IconGoogle />
+    case "line":
+      return <IconLine />
+    case "kakao":
+      return <IconKakao />
+    case "apple":
+      return <IconApple />
+    default:
+      return null
+  }
+}
+
+export default function Sidebar() {
+  const [authModal, setAuthModal] = useState(null)
+  const [toast, setToast] = useState(null)
+
+  const isLoginPicker = authModal === "login"
+  const isLoginEmail = authModal === "login-email"
+  const isSignupEmail = authModal === "signup-email"
+  const isAuthFormScreen = isSignupEmail || isLoginEmail
+  const isLoginFooter = isLoginPicker || isLoginEmail
+
+  useEffect(() => {
+    if (!authModal) return
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setAuthModal(null)
+    }
+    document.addEventListener("keydown", onKeyDown)
+    document.body.classList.add("modal-open")
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.removeEventListener("keydown", onKeyDown)
+      document.body.classList.remove("modal-open")
+      document.body.style.overflow = prevOverflow
+    }
+  }, [authModal])
+
+  useEffect(() => {
+    if (!toast) return
+    const id = setTimeout(() => setToast(null), 2800)
+    return () => clearTimeout(id)
+  }, [toast])
 
   return <>
       <div>
@@ -89,7 +544,11 @@ export default function Sidebar() {
 
             <div className="box_login">
               <div>
-                <button className="btn btn-danger">
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={() => setAuthModal("login")}
+                >
                   Đăng nhập
                 </button>
               </div>
@@ -123,6 +582,136 @@ export default function Sidebar() {
               </ul>
             </div>
           </aside>
-  </div> 
+  </div>
+
+      {authModal ? (
+        <div
+          className="login-modal-backdrop"
+          role="presentation"
+          onClick={() => setAuthModal(null)}
+        >
+          <div
+            className={`login-modal${isAuthFormScreen ? " login-modal--auth-form" : ""}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="auth-modal-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="login-modal__close"
+              aria-label="Đóng"
+              onClick={() => setAuthModal(null)}
+            >
+              <i className="fa-solid fa-xmark" aria-hidden />
+            </button>
+
+            {isSignupEmail ? (
+              <SignupEmailView
+                onBack={() => setAuthModal("signup")}
+                onPickPhone={() => setAuthModal("signup")}
+                onRegisterSuccess={() => setAuthModal("login")}
+              />
+            ) : isLoginEmail ? (
+              <LoginEmailView
+                onBack={() => setAuthModal("login")}
+                onPickPhone={() => setAuthModal("login")}
+                onLoginSuccess={() => {
+                  setAuthModal(null)
+                  setToast({ message: "Đã đăng nhập", kind: "success" })
+                }}
+              />
+            ) : (
+              <>
+                <h2 id="auth-modal-title" className="login-modal__title">
+                  {isLoginPicker ? "Đăng nhập vào TikTok" : "Đăng ký TikTok"}
+                </h2>
+
+                <div className="login-modal__options">
+                  {(isLoginPicker ? LOGIN_OPTIONS : SIGNUP_OPTIONS).map((opt) => (
+                    <div
+                      key={`${authModal}-${opt.id}`}
+                      className={
+                        isLoginPicker && opt.lastLogin
+                          ? "login-modal__option-wrap login-modal__option-wrap--badge"
+                          : "login-modal__option-wrap"
+                      }
+                    >
+                      <button
+                        type="button"
+                        className="login-modal__option"
+                        onClick={() => {
+                          if (!isLoginPicker && opt.action === "email") setAuthModal("signup-email")
+                          if (isLoginPicker && opt.id === "phone") setAuthModal("login-email")
+                        }}
+                      >
+                        <span className="login-modal__option-icon">
+                          <LoginOptionIcon type={opt.icon} />
+                        </span>
+                        <span className="login-modal__option-label">{opt.label}</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {isLoginPicker ? (
+                  <p className="login-modal__legal">
+                    Bằng việc tiếp tục, bạn đồng ý với{" "}
+                    <a href="#">Điều khoản Dịch vụ</a> của TikTok và xác nhận rằng bạn đã đọc{" "}
+                    <a href="#">Chính sách Quyền riêng tư</a> của TikTok.
+                  </p>
+                ) : (
+                  <p className="login-modal__legal">
+                    Bằng việc tiếp tục, bạn đồng ý với{" "}
+                    <a href="#">Điều khoản dịch vụ</a> của TikTok và xác nhận rằng bạn đã đọc{" "}
+                    <a href="#">Chính sách quyền riêng tư</a> của TikTok.
+                  </p>
+                )}
+              </>
+            )}
+
+            <div className="login-modal__footer">
+              {isLoginFooter ? (
+                <>
+                  <span>Bạn không có tài khoản? </span>
+                  <button
+                    type="button"
+                    className="login-modal__signup"
+                    onClick={() => setAuthModal("signup")}
+                  >
+                    Đăng ký
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span>Bạn đã có tài khoản? </span>
+                  <button
+                    type="button"
+                    className="login-modal__signup"
+                    onClick={() => setAuthModal("login")}
+                  >
+                    Đăng nhập
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {toast &&
+        createPortal(
+          <div
+            className={`app-toast app-toast--${toast.kind}`}
+            role="status"
+            aria-live="polite"
+          >
+            <span className="app-toast__icon" aria-hidden>
+              <i className="fa-solid fa-check" />
+            </span>
+            <span className="app-toast__text">{toast.message}</span>
+          </div>,
+          document.body,
+        )}
   </>
 }
