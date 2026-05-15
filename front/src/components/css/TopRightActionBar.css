@@ -1,46 +1,116 @@
-.TopRightActionBar{
+.TopRightActionBar {
   position: fixed;
+  top: 25px;
+  right: 25px;
+  z-index: 100;
   display: flex;
-  margin-right: 25px;
-  margin-top: 0;
-  height: 50px;
-  width: 400px;
-  margin-top: 25px;
-  border-radius: 30px;
-  right: 0;
-  background-color: #EFEFEF;
-  justify-content: center;
   align-items: center;
+  height: 50px;
+  width: auto;
+  max-width: min(380px, calc(100vw - 48px));
+  padding: 0 12px 0 14px;
+  border-radius: 30px;
+  background-color: #efefef;
   overflow: hidden;
+  box-sizing: border-box;
 }
-.TUXTooltip-reference button{
+
+.TopRightActionBar__inner {
   display: flex;
-  justify-content: center;
-  border: none;
   flex-wrap: nowrap;
   align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
   width: 100%;
-  padding: 0 0;
-  gap: 3px;
-
+  min-width: 0;
+  height: 100%;
 }
 
-.TUXTooltip-reference span{
-    /* cho nó hiện ... */
-  white-space: nowrap; 
+.TopRightActionBar__item {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.TopRightActionBar__item--grow {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 42%;
+}
+
+.TopRightActionBar__link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.TopRightActionBar__link svg {
+  flex-shrink: 0;
+  width: 1em;
+  height: 1em;
+}
+
+.TopRightActionBar__link span {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  font: 14px;
+  white-space: nowrap;
 }
 
-.TUXButton-iconContainer{
+.TopRightActionBar__auth {
   display: flex;
-  justify-content: center;
+  flex: 0 0 auto;
   align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  margin-left: auto;
 }
-.TUXButton-iconContainer .ImgAvatar{
-  width: 40px;
-  height: 25px;
-  margin: auto;
+
+.TopRightActionBar__divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 18px;
+  margin: 0 6px 0 2px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.TopRightActionBar__login-btn {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: #fe2c55;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.TopRightActionBar__login-btn:hover {
+  background: #e6254c;
+}
+
+.ImgAvatar {
+  display: block;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.ImgAvatar--logged-in {
+  width: 24px;
+  height: 24px;
 }

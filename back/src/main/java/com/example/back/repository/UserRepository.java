@@ -60,4 +60,8 @@ public class UserRepository {
         .getResultStream()
         .findFirst();
   }
+
+  public Optional<UserEntity> findById(long id) {
+    return Optional.ofNullable(entityManager.find(UserEntity.class, id));
+  }
 }

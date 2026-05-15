@@ -10,10 +10,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.back.dto.LoginRequest;
 import com.example.back.dto.RegisterRequest;
+import com.example.back.dto.auth.AuthTokenBundle;
+import com.example.back.dto.auth.AuthUserDto;
 import com.example.back.entity.UserEntity;
 import com.example.back.exception.BadLoginException;
 import com.example.back.exception.DuplicateEmailException;
+import com.example.back.exception.InvalidTokenException;
 import com.example.back.repository.UserRepository;
+import com.example.back.security.JwtTokenService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,9 +27,10 @@ public class AuthService {
 
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
+  private final JwtTokenService jwtTokenService;
 
   @Transactional(readOnly = true)
-  public Map<String, Object> login(LoginRequest request) {
+  public AuthTokenBundle login(LoginRequest request) {
     String raw = request.getIdentifier().trim();
     if (raw.isEmpty()) {
       throw new BadLoginException();
@@ -39,11 +44,26 @@ public class AuthService {
     if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
       throw new BadLoginException();
     }
-    Map<String, Object> data = new LinkedHashMap<>();
-    data.put("id", user.getId());
-    data.put("username", user.getUsername());
-    data.put("email", user.getEmail());
-    return data;
+    return issueTokensForUser(user);
+  }
+
+  /** Đổi refresh cookie lấy access token mới (và có thể xoay refresh — hiện giữ nguyên TTL cookie). */
+  @Transactional(readOnly = true)
+  public AuthTokenBundle refreshFromCookie(String refreshJwt) {
+    long userId = jwtTokenService.parseRefreshTokenUserId(refreshJwt);
+    UserEntity user =
+        userRepository.findById(userId).orElseThrow(InvalidTokenException::new);
+    return issueTokensForUser(user);
+  }
+
+  private AuthTokenBundle issueTokensForUser(UserEntity user) {
+    AuthUserDto brief =
+        new AuthUserDto(
+            user.getId(), user.getUsername(), user.getEmail(), user.getAvatarUrl());
+    String access =
+        jwtTokenService.createAccessToken(user.getId(), user.getUsername(), user.getEmail());
+    String refresh = jwtTokenService.createRefreshToken(user.getId());
+    return new AuthTokenBundle(access, refresh, jwtTokenService.accessTtlSeconds(), brief);
   }
 
   @Transactional

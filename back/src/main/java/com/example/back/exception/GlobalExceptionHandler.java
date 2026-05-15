@@ -40,4 +40,10 @@ public class GlobalExceptionHandler {
   public ApiResponse<Object> handleBadLogin(BadLoginException ex) {
     return ApiResponse.of(401, ex.getMessage(), null);
   }
+
+  @ExceptionHandler(InvalidTokenException.class)
+  @ResponseStatus(HttpStatus.UNAUTHORIZED)
+  public ApiResponse<Object> handleInvalidToken(InvalidTokenException ex) {
+    return ApiResponse.of(401, ex.getMessage(), null);
+  }
 }
