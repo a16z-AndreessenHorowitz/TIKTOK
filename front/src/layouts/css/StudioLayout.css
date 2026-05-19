@@ -1,0 +1,36 @@
+.studio-layout {
+  display: flex;
+  min-height: 100dvh;
+  background: #f8f8f8;
+  color: #161823;
+}
+
+.studio-main {
+  flex: 1;
+  min-width: 0;
+  margin-left: 240px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.studio-placeholder {
+  padding: 48px 32px;
+  text-align: center;
+}
+
+.studio-placeholder h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+
+.studio-placeholder p {
+  color: rgba(22, 24, 35, 0.65);
+  margin: 0 0 16px;
+}
+
+.studio-placeholder a {
+  color: #fe2c55;
+  font-weight: 600;
+  text-decoration: none;
+}
