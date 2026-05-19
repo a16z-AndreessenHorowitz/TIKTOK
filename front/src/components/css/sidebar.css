@@ -27,6 +27,10 @@
     text-decoration: none;
     color:#000;
 }
+.sidebar .DivMainNavContainer .box_ul .box_li--active{
+  background-color: #ddd;
+  border-radius: 8px;
+}
 .sidebar .DivMainNavContainer .box_ul li{
   padding:3px;
   font-size: 16px;

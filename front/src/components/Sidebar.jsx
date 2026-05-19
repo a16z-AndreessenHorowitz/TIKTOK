@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from "react"
 import { createPortal } from "react-dom"
+import { NavLink, useLocation, useNavigate } from "react-router-dom"
+import { useAuth } from "../hooks/useAuth"
+import { saveSessionFromAuthData } from "../lib/authSession"
+import { openLoginModal } from "../lib/authUi"
+import { getUserAvatarSrc } from "../lib/userAvatar"
 import "./css/sidebar.css"
 
 function IconQr() {
@@ -304,6 +309,7 @@ function LoginEmailView({ onBack, onPickPhone, onLoginSuccess }) {
     try {
       const res = await fetch("/api/v1/auth/login", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           identifier: identifier.trim(),
@@ -315,6 +321,7 @@ function LoginEmailView({ onBack, onPickPhone, onLoginSuccess }) {
         setLoginError(payload?.message || "Đăng nhập thất bại.")
         return
       }
+      saveSessionFromAuthData(payload.data)
       onLoginSuccess?.()
     } catch {
       setLoginError("Không kết nối được máy chủ.")
@@ -426,6 +433,10 @@ function LoginOptionIcon({ type }) {
 }
 
 export default function Sidebar() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { isLoggedIn, user } = useAuth()
+  const profileAvatarSrc = getUserAvatarSrc(user)
   const [authModal, setAuthModal] = useState(null)
   const [toast, setToast] = useState(null)
 
@@ -456,6 +467,12 @@ export default function Sidebar() {
     const id = setTimeout(() => setToast(null), 2800)
     return () => clearTimeout(id)
   }, [toast])
+
+  useEffect(() => {
+    const onOpenLogin = () => setAuthModal("login")
+    window.addEventListener("tt-open-login", onOpenLogin)
+    return () => window.removeEventListener("tt-open-login", onOpenLogin)
+  }, [])
 
   return <>
       <div>
@@ -518,17 +535,35 @@ export default function Sidebar() {
                 </li>
 
                 <li>
-                  <a href="*" className="box_li">
+                  <NavLink
+                    to="/upload"
+                    onClick={(e) => {
+                      if (!isLoggedIn) {
+                        e.preventDefault()
+                        sessionStorage.setItem("tt-auth-return", "/upload")
+                        openLoginModal()
+                      }
+                    }}
+                    className={({ isActive }) =>
+                      `box_li${isActive ? " box_li--active" : ""}`
+                    }
+                  >
                     <span>
                      <svg fill="currentColor" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" width="2em" height="2em"><path d="M25 15a1 1 0 0 1 1 1v6h6a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-6v6a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-6h-6a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1h6v-6a1 1 0 0 1 1-1h2Z"></path><path d="M33.58 4.5H14.42c-1.33 0-2.45 0-3.37.07-.95.08-1.86.25-2.73.7a7 7 0 0 0-3.06 3.05 7.14 7.14 0 0 0-.69 2.73 44.6 44.6 0 0 0-.07 3.37v19.16c0 1.33 0 2.45.07 3.37.08.95.25 1.86.7 2.73a7 7 0 0 0 3.05 3.06c.87.44 1.78.6 2.73.69.92.07 2.04.07 3.37.07h19.16c1.33 0 2.45 0 3.37-.07a7.14 7.14 0 0 0 2.73-.7 7 7 0 0 0 3.06-3.05c.44-.87.6-1.78.69-2.73.07-.92.07-2.04.07-3.37V14.42c0-1.33 0-2.45-.07-3.37a7.14 7.14 0 0 0-.7-2.73 7 7 0 0 0-3.05-3.06 7.14 7.14 0 0 0-2.73-.69 44.6 44.6 0 0 0-3.37-.07ZM10.14 8.83c.2-.1.53-.21 1.24-.27.73-.06 1.69-.06 3.12-.06h19c1.43 0 2.39 0 3.12.06a3.3 3.3 0 0 1 1.24.27 3 3 0 0 1 1.31 1.3c.1.21.21.54.27 1.25.06.73.06 1.69.06 3.12v19c0 1.43 0 2.39-.06 3.12a3.3 3.3 0 0 1-.27 1.24 3 3 0 0 1-1.3 1.31c-.21.1-.54.21-1.25.27-.73.06-1.69.06-3.12.06h-19c-1.43 0-2.39 0-3.12-.06a3.3 3.3 0 0 1-1.24-.27 3 3 0 0 1-1.31-1.3c-.1-.21-.21-.54-.27-1.25-.06-.73-.06-1.69-.06-3.12v-19c0-1.43 0-2.39.06-3.12a3.3 3.3 0 0 1 .27-1.24 3 3 0 0 1 1.3-1.31Z"></path></svg>
                     </span> Tải lên
-                  </a>
+                  </NavLink>
                 </li>
     
                 <li>
-                  <a href="*" className="box_li">
-                    <span>
-                    <svg fill="currentColor" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" width="2em" height="2em"><path d="M24 3a10 10 0 1 1 0 20 10 10 0 0 1 0-20Zm0 4a6 6 0 1 0 0 12.00A6 6 0 0 0 24 7Zm0 19c10.3 0 16.67 6.99 17 17 .02.55-.43 1-1 1h-2c-.54 0-.98-.45-1-1-.3-7.84-4.9-13-13-13s-12.7 5.16-13 13c-.02.55-.46 1-1.02 1h-2c-.55 0-1-.45-.98-1 .33-10.01 6.7-17 17-17Z"></path></svg>                    </span> Hồ sơ
+                  <a href="*" className="box_li box_li--profile">
+                    <span className={isLoggedIn ? "sidebar-nav-avatar" : undefined}>
+                      {isLoggedIn ? (
+                        <img src={profileAvatarSrc} alt="" />
+                      ) : (
+                        <svg fill="currentColor" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" width="2em" height="2em"><path d="M24 3a10 10 0 1 1 0 20 10 10 0 0 1 0-20Zm0 4a6 6 0 1 0 0 12.00A6 6 0 0 0 24 7Zm0 19c10.3 0 16.67 6.99 17 17 .02.55-.43 1-1 1h-2c-.54 0-.98-.45-1-1-.3-7.84-4.9-13-13-13s-12.7 5.16-13 13c-.02.55-.46 1-1.02 1h-2c-.55 0-1-.45-.98-1 .33-10.01 6.7-17 17-17Z"></path></svg>
+                      )}
+                    </span>
+                    Hồ sơ
                   </a>
                 </li>
 
@@ -542,17 +577,19 @@ export default function Sidebar() {
               </ul>
             </div>
 
-            <div className="box_login">
-              <div>
-                <button
-                  type="button"
-                  className="btn btn-danger"
-                  onClick={() => setAuthModal("login")}
-                >
-                  Đăng nhập
-                </button>
+            {!isLoggedIn ? (
+              <div className="box_login">
+                <div>
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={() => setAuthModal("login")}
+                  >
+                    Đăng nhập
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : null}
 
             <hr>
             </hr>
@@ -619,6 +656,13 @@ export default function Sidebar() {
                 onLoginSuccess={() => {
                   setAuthModal(null)
                   setToast({ message: "Đã đăng nhập", kind: "success" })
+                  const returnTo =
+                    sessionStorage.getItem("tt-auth-return") ||
+                    location.state?.from?.pathname
+                  if (returnTo?.startsWith("/upload")) {
+                    sessionStorage.removeItem("tt-auth-return")
+                    navigate(returnTo, { replace: true })
+                  }
                 }}
               />
             ) : (
