@@ -1,11 +1,15 @@
 package com.example.back.dto.imagekit;
 
-import lombok.Builder;
-import lombok.Getter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-@Getter
-@Builder
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ImageKitUploadResponse {
+
   private String fileId;
   private String name;
   private String url;

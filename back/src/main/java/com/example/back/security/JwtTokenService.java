@@ -6,9 +6,9 @@ import java.util.Date;
 
 import javax.crypto.SecretKey;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.example.back.config.AuthTokenProperties;
 import com.example.back.exception.InvalidTokenException;
 
 import io.jsonwebtoken.Claims;
@@ -16,22 +16,28 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
 
 @Service
-@RequiredArgsConstructor
 public class JwtTokenService {
 
   private static final String CLAIM_USE = "use";
   private static final String USE_ACCESS = "access";
   private static final String USE_REFRESH = "refresh";
 
-  private final AuthTokenProperties props;
+  @Value("${app.auth.jwt-secret:dev-only-change-me-please-use-32chars-min!!}")
+  private String jwtSecret;
+
+  @Value("${app.auth.access-ttl-minutes:15}")
+  private long accessTtlMinutes;
+
+  @Value("${app.auth.refresh-ttl-days:30}")
+  private long refreshTtlDays;
+
   private SecretKey key;
 
   @PostConstruct
   void init() {
-    byte[] bytes = props.getJwtSecret().getBytes(StandardCharsets.UTF_8);
+    byte[] bytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
     if (bytes.length < 32) {
       throw new IllegalStateException(
           "app.auth.jwt-secret must be at least 32 bytes (UTF-8) for HS256");
@@ -41,7 +47,7 @@ public class JwtTokenService {
 
   public String createAccessToken(long userId, String username, String email) {
     Instant now = Instant.now();
-    Instant exp = now.plusSeconds(props.getAccessTtlMinutes() * 60);
+    Instant exp = now.plusSeconds(accessTtlMinutes * 60);
     return Jwts.builder()
         .subject(String.valueOf(userId))
         .claim(CLAIM_USE, USE_ACCESS)
@@ -55,7 +61,7 @@ public class JwtTokenService {
 
   public String createRefreshToken(long userId) {
     Instant now = Instant.now();
-    Instant exp = now.plusSeconds(props.getRefreshTtlDays() * 24 * 60 * 60);
+    Instant exp = now.plusSeconds(refreshTtlDays * 24 * 60 * 60);
     return Jwts.builder()
         .subject(String.valueOf(userId))
         .claim(CLAIM_USE, USE_REFRESH)
@@ -93,7 +99,7 @@ public class JwtTokenService {
   }
 
   public long accessTtlSeconds() {
-    return props.getAccessTtlMinutes() * 60;
+    return accessTtlMinutes * 60;
   }
 
   public record AccessClaims(long userId, String username, String email) {}

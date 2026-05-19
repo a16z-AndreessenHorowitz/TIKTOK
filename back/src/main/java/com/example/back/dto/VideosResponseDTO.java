@@ -2,7 +2,11 @@ package com.example.back.dto;
 
 import java.time.LocalDateTime;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -10,28 +14,23 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class VideosResponseDTO {
+
   private Long id;
+  private String videoUrl;
+  private String thumbnailUrl;
+  private String caption;
 
-    private String videoUrl;
-    private String thumbnailUrl;
+  private Long userId;
+  private String username;
+  private String avatarUrl;
 
-    private String caption;
+  private Long viewCount;
+  private Long likeCount;
+  private Long commentCount;
+  private Long shareCount;
 
-    // 👤 thông tin user (có thể trả ra cho frontend)
-    private Long userId;
-    private String username;
-    private String avatarUrl;
+  private Boolean isLiked;
+  private Boolean isFollowed;
 
-    // 📊 thống kê
-    private Long viewCount;
-    private Long likeCount;
-    private Long commentCount;
-    private Long shareCount;
-
-    // 🔥 trạng thái user hiện tại
-    private Boolean isLiked;   // user hiện tại đã like chưa
-    private Boolean isFollowed; // đã follow chưa
-
-    // ⏰ thời gian
-    private LocalDateTime createdAt;
+  private LocalDateTime createdAt;
 }

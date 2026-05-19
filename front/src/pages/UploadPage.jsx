@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { uploadVideoToImageKit } from "../lib/imagekitUpload";
 import UploadPreviewPhone from "../components/UploadPreviewPhone";
+import { uploadVideo } from "../lib/videoUpload";
 import "./css/UploadPage.css";
 
 const MAX_BYTES = 30 * 1024 * 1024 * 1024;
@@ -128,13 +128,14 @@ export default function UploadPage() {
     if (!selectedFile) return;
 
     setUploading(true);
-    setProgress(12);
+    setError("");
+    setProgress(15);
 
     try {
-      setProgress(45);
-      const result = await uploadVideoToImageKit(selectedFile);
+      setProgress(65);
+      const video = await uploadVideo({ file: selectedFile, caption: description });
       setProgress(100);
-      window.alert(`Đã tải lên: ${result?.name || selectedFile.name}`);
+      window.alert(`Đã tải lên: ${video?.videoUrl || selectedFile.name}`);
       clearPreview();
     } catch (err) {
       setError(err.message || "Tải video lên thất bại.");
@@ -225,6 +226,11 @@ export default function UploadPage() {
                 <div className="upload-dropzone__progress-bar" style={{ width: `${progress}%` }} />
                 <span>Đang tải lên… {progress}%</span>
               </div>
+            ) : null}
+            {error ? (
+              <p className="upload-dropzone__error" role="alert">
+                {error}
+              </p>
             ) : null}
           </div>
         </div>

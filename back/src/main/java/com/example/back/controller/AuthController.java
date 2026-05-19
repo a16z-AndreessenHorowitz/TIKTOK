@@ -3,6 +3,7 @@ package com.example.back.controller;
 import java.time.Duration;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -13,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.back.config.AuthTokenProperties;
 import com.example.back.dto.ApiResponse;
 import com.example.back.dto.LoginRequest;
 import com.example.back.dto.RegisterRequest;
@@ -33,7 +33,15 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
   private final AuthService authService;
-  private final AuthTokenProperties authProps;
+
+  @Value("${app.auth.refresh-ttl-days:30}")
+  private long refreshTtlDays;
+
+  @Value("${app.auth.refresh-cookie-name:tt_refresh_token}")
+  private String refreshCookieName;
+
+  @Value("${app.auth.cookie-secure:false}")
+  private boolean cookieSecure;
 
   @PostMapping("/login")
   public ResponseEntity<ApiResponse<Map<String, Object>>> login(
@@ -52,7 +60,7 @@ public class AuthController {
    */
   @PostMapping("/refresh")
   public ResponseEntity<ApiResponse<Map<String, Object>>> refresh(HttpServletRequest request) {
-    String refreshJwt = readCookie(request, authProps.getRefreshCookieName());
+    String refreshJwt = readCookie(request, refreshCookieName);
     if (refreshJwt == null || refreshJwt.isBlank()) {
       throw new InvalidTokenException();
     }
@@ -78,19 +86,19 @@ public class AuthController {
   }
 
   private ResponseCookie refreshCookie(String refreshTokenValue) {
-    return ResponseCookie.from(authProps.getRefreshCookieName(), refreshTokenValue)
+    return ResponseCookie.from(refreshCookieName, refreshTokenValue)
         .httpOnly(true)
-        .secure(authProps.isCookieSecure())
+        .secure(cookieSecure)
         .path("/")
-        .maxAge(Duration.ofDays(authProps.getRefreshTtlDays()))
+        .maxAge(Duration.ofDays(refreshTtlDays))
         .sameSite("Lax")
         .build();
   }
 
   private ResponseCookie clearRefreshCookie() {
-    return ResponseCookie.from(authProps.getRefreshCookieName(), "")
+    return ResponseCookie.from(refreshCookieName, "")
         .httpOnly(true)
-        .secure(authProps.isCookieSecure())
+        .secure(cookieSecure)
         .path("/")
         .maxAge(0)
         .sameSite("Lax")

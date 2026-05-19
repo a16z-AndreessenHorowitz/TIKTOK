@@ -1,27 +1,36 @@
 package com.example.back.repository;
 
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-
-import com.example.back.dto.VideosResponseDTO;
-
-import lombok.RequiredArgsConstructor;
 import java.util.List;
 
+import org.springframework.stereotype.Repository;
+
+import com.example.back.entity.VideoEntity;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 @Repository
-@RequiredArgsConstructor
 public class VideoRepository {
 
-    private final JdbcTemplate jdbcTemplate;
+  @PersistenceContext
+  private EntityManager entityManager;
 
-    public List<VideosResponseDTO> getFeed() {
-        String sql = "SELECT * FROM videos";
+  public VideoEntity save(VideoEntity video) {
+    entityManager.persist(video);
+    entityManager.flush();
+    return video;
+  }
 
-        return jdbcTemplate.query(sql, (rs, rowNum) ->
-            VideosResponseDTO.builder()
-                .id(rs.getLong("id"))
-                .videoUrl(rs.getString("video_url"))
-                .build()
-        );
-    }
+  public List<VideoEntity> findFeed() {
+    return entityManager
+        .createQuery(
+            """
+            SELECT v
+            FROM VideoEntity v
+            JOIN FETCH v.user
+            ORDER BY v.createdAt DESC
+            """,
+            VideoEntity.class)
+        .getResultList();
+  }
 }

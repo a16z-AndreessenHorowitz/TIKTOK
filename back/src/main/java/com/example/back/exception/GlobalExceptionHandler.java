@@ -46,4 +46,16 @@ public class GlobalExceptionHandler {
   public ApiResponse<Object> handleInvalidToken(InvalidTokenException ex) {
     return ApiResponse.of(401, ex.getMessage(), null);
   }
+
+  @ExceptionHandler(IllegalArgumentException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ApiResponse<Object> handleBadRequest(IllegalArgumentException ex) {
+    return ApiResponse.of(400, ex.getMessage(), null);
+  }
+
+  @ExceptionHandler(ImageKitUploadException.class)
+  @ResponseStatus(HttpStatus.BAD_GATEWAY)
+  public ApiResponse<Object> handleImageKitUpload(ImageKitUploadException ex) {
+    return ApiResponse.of(502, ex.getMessage(), null);
+  }
 }
