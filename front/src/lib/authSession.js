@@ -36,19 +36,29 @@ export function getUser() {
 /** F5: nếu chưa có access, thử refresh bằng cookie. */
 export async function bootstrapAuthSession() {
   if (getAccessToken()) return true
+  return refreshAuthSession({ clearOnFailure: false })
+}
+
+/** Access hết hạn: đổi refresh cookie lấy access mới. */
+export async function refreshAuthSession({ clearOnFailure = true } = {}) {
   try {
     const res = await fetch("/api/v1/auth/refresh", {
       method: "POST",
       credentials: "include",
     })
-    if (!res.ok) return false
+    if (!res.ok) {
+      if (clearOnFailure) clearSession()
+      return false
+    }
     const payload = await res.json().catch(() => ({}))
     if (payload?.data?.accessToken) {
       saveSessionFromAuthData(payload.data)
       return true
     }
+    if (clearOnFailure) clearSession()
     return false
   } catch {
+    if (clearOnFailure) clearSession()
     return false
   }
 }

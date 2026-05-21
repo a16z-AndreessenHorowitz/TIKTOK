@@ -64,4 +64,8 @@ public class UserRepository {
   public Optional<UserEntity> findById(long id) {
     return Optional.ofNullable(entityManager.find(UserEntity.class, id));
   }
+
+  public UserEntity getReference(long id) {
+    return entityManager.getReference(UserEntity.class, id);
+  }
 }

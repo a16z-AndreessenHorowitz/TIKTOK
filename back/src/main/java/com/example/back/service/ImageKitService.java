@@ -44,6 +44,7 @@ public class ImageKitService {
     body.add("file", filePart(file, fileName));
     body.add("fileName", fileName);
     body.add("useUniqueFileName", "true");
+    body.add("isPrivateFile", "false");
     if (StringUtils.hasText(folder)) {
       body.add("folder", folder);
     }
@@ -74,6 +75,9 @@ public class ImageKitService {
   private void validateConfig() {
     if (!StringUtils.hasText(privateKey)) {
       throw new ImageKitUploadException("Thiếu app.imagekit.private-key trong application.properties.");
+    }
+    if (!StringUtils.hasText(uploadEndpoint) || !uploadEndpoint.startsWith("http")) {
+      throw new ImageKitUploadException("Thiếu hoặc sai app.imagekit.upload-endpoint trong application.properties.");
     }
   }
 

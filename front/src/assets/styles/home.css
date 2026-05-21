@@ -24,16 +24,50 @@
   align-items: center;
 }
 
+.feed-stage {
+  --feed-video-height: calc(100dvh - 2 * var(--feed-pad-y));
+  --feed-action-width: 74px;
+  --feed-action-gap: 18px;
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--feed-action-gap);
+  width: 100%;
+  max-width: min(100%, 1180px);
+  height: var(--feed-video-height);
+  min-height: 0;
+}
+
 /* KHUNG BAO VIDEO */
 .video-frame {
+  --feed-video-max-width: min(
+    calc(100% - var(--feed-action-width) - var(--feed-action-gap)),
+    72vw,
+    1100px
+  );
+
   flex: 0 1 auto;
   min-height: 0;
-  max-width: 60vw;
-  max-height: calc(100dvh - 2 * var(--feed-pad-y));
-  width: 100%;
+  width: min(
+    var(--feed-video-max-width),
+    calc(var(--feed-video-height) * var(--video-aspect-ratio, 0.5625))
+  );
+  aspect-ratio: var(--video-aspect-ratio, 0.5625);
+  height: auto;
+  max-height: var(--feed-video-height);
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+@media (max-width: 760px) {
+  .feed-stage {
+    --feed-action-width: 0px;
+    --feed-action-gap: 0px;
+    align-items: center;
+  }
 }
 
 .video-wrapper {
@@ -42,28 +76,174 @@
   justify-content: center;
   align-items: center;
   width: 100%;
+  height: 100%;
   min-height: 0;
-  max-height: calc(100dvh - 2 * var(--feed-pad-y));
+  max-height: var(--feed-video-height);
 }
 
 .video-inner {
   position: relative;
-  display: block;
-  width: fit-content;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
   max-width: 100%;
-  max-height: calc(100dvh - 2 * var(--feed-pad-y));
+  max-height: var(--feed-video-height);
   margin-inline: auto;
   line-height: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.video-inner::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34%;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.68) 100%);
 }
 
 /* VIDEO */
 .video-player {
-  max-width: 100%;
-  max-height: calc(100dvh - 2 * var(--feed-pad-y));
-  width: auto;
-  height: auto;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
+  background: #000;
   display: block;
+}
+
+.video-meta {
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  bottom: 18px;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+}
+
+.video-meta__author,
+.video-meta__caption-text,
+.video-meta__music {
+  margin: 0;
+}
+
+.video-meta__author {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.video-meta__caption {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  max-width: 100%;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+.video-meta__caption-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.video-meta__caption--expanded {
+  align-items: stretch;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 42dvh;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.video-meta__caption--expanded::-webkit-scrollbar {
+  display: none;
+}
+
+.video-meta__caption--expanded .video-meta__caption-text {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.video-meta__caption-measure {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: none;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.video-meta__more {
+  flex: 0 0 auto;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  text-shadow: inherit;
+}
+
+.video-meta__caption--expanded .video-meta__more {
+  align-self: flex-end;
+}
+
+.video-meta__music {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.video-meta__music i {
+  flex: 0 0 auto;
+  font-size: 15px;
+}
+
+.video-meta__music span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.video-fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #000;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
 }
 
 .volume-box {

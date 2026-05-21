@@ -58,4 +58,10 @@ public class GlobalExceptionHandler {
   public ApiResponse<Object> handleImageKitUpload(ImageKitUploadException ex) {
     return ApiResponse.of(502, ex.getMessage(), null);
   }
+
+  @ExceptionHandler(VideoStorageException.class)
+  @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+  public ApiResponse<Object> handleVideoStorage(VideoStorageException ex) {
+    return ApiResponse.of(500, ex.getMessage(), null);
+  }
 }

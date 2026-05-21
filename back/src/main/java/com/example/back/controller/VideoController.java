@@ -1,7 +1,5 @@
 package com.example.back.controller;
 
-import java.util.List;
-
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,10 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.back.dto.ApiResponse;
+import com.example.back.dto.VideoFeedResponseDTO;
 import com.example.back.dto.VideosResponseDTO;
 import com.example.back.exception.InvalidTokenException;
 import com.example.back.security.JwtTokenService;
-import com.example.back.service.client.VideoService;
+import com.example.back.service.VideoService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,8 +30,10 @@ public class VideoController {
   private final JwtTokenService jwtTokenService;
 
   @GetMapping("/feed")
-  public ApiResponse<List<VideosResponseDTO>> getVideoFeed() {
-    return ApiResponse.of(200, "Success", videoService.getFeed());
+  public ApiResponse<VideoFeedResponseDTO> getVideoFeed(
+      @RequestParam(value = "cursor", required = false) String cursor,
+      @RequestParam(value = "limit", required = false) Integer limit) {
+    return ApiResponse.of(200, "Success", videoService.getFeed(cursor, limit));
   }
 
   @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

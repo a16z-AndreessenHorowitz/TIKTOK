@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import UploadPreviewPhone from "../components/UploadPreviewPhone";
+import { queueToast } from "../lib/toastSession";
 import { uploadVideo } from "../lib/videoUpload";
 import "./css/UploadPage.css";
 
@@ -80,6 +82,7 @@ function validateVideoFile(file) {
 }
 
 export default function UploadPage() {
+  const navigate = useNavigate();
   const inputRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -133,10 +136,17 @@ export default function UploadPage() {
 
     try {
       setProgress(65);
-      const video = await uploadVideo({ file: selectedFile, caption: description });
+      const uploadedVideo = await uploadVideo({ file: selectedFile, caption: description });
       setProgress(100);
-      window.alert(`Đã tải lên: ${video?.videoUrl || selectedFile.name}`);
+      queueToast({ message: "Đã đăng video thành công", kind: "success" });
       clearPreview();
+      navigate("/", {
+        replace: true,
+        state: {
+          uploadedVideo,
+          uploadedVideoId: uploadedVideo?.id,
+        },
+      });
     } catch (err) {
       setError(err.message || "Tải video lên thất bại.");
     } finally {

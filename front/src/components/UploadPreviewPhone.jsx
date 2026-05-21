@@ -1,10 +1,22 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 export default function UploadPreviewPhone({ previewUrl, description = "" }) {
   const videoRef = useRef(null);
+  const [videoLayout, setVideoLayout] = useState({ previewUrl: null, fit: "cover" });
+  const videoFit = videoLayout.previewUrl === previewUrl ? videoLayout.fit : "cover";
   const caption = description.trim() || "";
 
   if (!previewUrl) return null;
+
+  const updateVideoFit = () => {
+    const video = videoRef.current;
+    if (!video?.videoWidth || !video?.videoHeight) return;
+
+    setVideoLayout({
+      previewUrl,
+      fit: video.videoWidth > video.videoHeight ? "contain" : "cover",
+    });
+  };
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -51,7 +63,8 @@ export default function UploadPreviewPhone({ previewUrl, description = "" }) {
           ref={videoRef}
           src={previewUrl}
           playsInline
-          className="upload-preview-phone__video"
+          onLoadedMetadata={updateVideoFit}
+          className={`upload-preview-phone__video upload-preview-phone__video--${videoFit}`}
         />
       </div>
 
