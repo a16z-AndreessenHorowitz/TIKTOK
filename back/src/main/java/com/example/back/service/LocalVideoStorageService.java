@@ -17,6 +17,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriUtils;
 
+import com.example.back.config.VideoStorageProperties;
 import com.example.back.exception.VideoStorageException;
 
 @Service
@@ -25,16 +26,19 @@ public class LocalVideoStorageService {
   private static final Set<String> ACCEPTED_EXTENSIONS =
       Set.of(".mp4", ".mov", ".webm", ".mkv", ".avi", ".m4v");
 
-  @Value("${app.video.storage-dir}")
-  private String storageDir;
+  private final VideoStorageProperties videoStorageProperties;
 
   @Value("${app.video.url-prefix:/api/v1/videos/files}")
   private String urlPrefix;
 
+  public LocalVideoStorageService(VideoStorageProperties videoStorageProperties) {
+    this.videoStorageProperties = videoStorageProperties;
+  }
+
   public StoredVideo store(MultipartFile file) {
     validateFile(file);
 
-    Path storageRoot = Path.of(storageDir).toAbsolutePath().normalize();
+    Path storageRoot = videoStorageProperties.storageRoot();
     String fileName = buildFileName(file);
     Path destination = storageRoot.resolve(fileName).normalize();
     if (!destination.startsWith(storageRoot)) {

@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.CacheControl;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -14,12 +13,15 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class LocalVideoResourceConfig implements WebMvcConfigurer {
 
-  @Value("${app.video.storage-dir}")
-  private String storageDir;
+  private final VideoStorageProperties videoStorageProperties;
+
+  public LocalVideoResourceConfig(VideoStorageProperties videoStorageProperties) {
+    this.videoStorageProperties = videoStorageProperties;
+  }
 
   @Override
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
-    Path storageRoot = Path.of(storageDir).toAbsolutePath().normalize();
+    Path storageRoot = videoStorageProperties.storageRoot();
     try {
       Files.createDirectories(storageRoot);
     } catch (IOException ex) {
