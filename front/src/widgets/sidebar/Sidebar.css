@@ -1,0 +1,651 @@
+
+.sidebar .image__logo{
+  padding-bottom: 15px;
+}
+.sidebar .box_search__search{
+  font-size: 20px;
+  color:#9e9a9a;
+  margin-top: 5px;
+  margin-left: 5px;
+
+
+}
+.sidebar .box_search__input{
+  width: 210px;
+  height: 40px;
+  padding-left: 25px;
+  border-radius: 20px;
+  border:1px solid #9e9a9a;
+    margin-bottom: 10px;
+      background-color: #ddd;  
+}
+.sidebar .DivMainNavContainer .box_ul{
+  list-style: none;
+  padding: 0;
+}
+.sidebar .DivMainNavContainer .box_ul a{
+    text-decoration: none;
+    color:#000;
+}
+.sidebar .DivMainNavContainer .box_ul .box_li {
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #000;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.sidebar .DivMainNavContainer .box_ul li{
+  padding:3px;
+  font-size: 16px;
+  height: 40px;
+  margin-bottom: 5px;
+}
+.sidebar .DivMainNavContainer .box_ul li:hover{
+  background-color: #ddd ;
+}
+.sidebar .DivMainNavContainer .box_ul li:last-child{
+  margin-bottom: 2px;
+}
+.sidebar .box_login .btn{
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.sidebar .box_li--profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar .sidebar-nav-avatar {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.sidebar .sidebar-nav-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sidebar .DivFooterContainer ul {
+  padding: 0;
+  list-style: none;
+}
+.sidebar .DivFooterContainer ul li{
+  margin-bottom: 3px;
+}
+.sidebar .DivFooterContainer ul li a{
+  text-decoration: none;
+  color:#8A8B90;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.login-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1080;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.5);
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+}
+
+.login-modal {
+  position: relative;
+  width: 100%;
+  max-width: 550px;
+  min-height: clamp(320px, 72vh, 640px);
+  max-height: min(648px, 92vh);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+  padding: 28px 24px 32px;
+}
+
+.login-modal__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #161823;
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.login-modal__close:hover {
+  background: #f1f1f2;
+}
+
+.login-modal__title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #161823;
+  flex-shrink: 0;
+  margin: 0 0 24px;
+  padding: 0 36px 0 12px;
+  line-height: 1.3;
+  align-self: center;
+  width: min(100%, 400px);
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.login-modal__options {
+  flex: 1 1 0;
+  align-self: center;
+  width: min(100%, 400px);
+  max-width: 380px;
+  min-height: 0;
+  max-height: 380px;
+  overflow-y: auto;
+  margin: 0 auto;
+  /* padding phải rộng hơn để nội dung cách thanh cuộn một khe nhỏ */
+  padding: 12px 18px 5px 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  row-gap: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(22, 24, 35, 0.28) transparent;
+}
+
+.login-modal__options::-webkit-scrollbar {
+  width: 4px;
+}
+
+.login-modal__options::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 4px;
+  margin-right: 2px;
+}
+
+.login-modal__options::-webkit-scrollbar-thumb {
+  background: rgba(22, 24, 35, 0.22);
+  border-radius: 999px;
+}
+
+.login-modal__options::-webkit-scrollbar-thumb:hover {
+  background: rgba(22, 24, 35, 0.35);
+}
+
+.login-modal__badge {
+  align-self: flex-end;
+  margin-right: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0077e6;
+  background: #e8f4ff;
+  border-radius: 999px;
+  padding: 2px 8px;
+  line-height: 1.4;
+}
+
+.login-modal__option-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  row-gap: 10px;
+}
+
+.login-modal__option {
+  width: 100%;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  min-height: 43px;
+  padding: 11px 16px;
+  border: 1px solid #e3e3e4;
+  border-radius: 8px;
+  background: #fff;
+  color: #161823;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.login-modal__option:hover {
+  background: #f8f8f8;
+}
+
+.login-modal__option-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-modal__option-label {
+  flex: 1;
+  text-align: center;
+}
+
+.login-modal__legal {
+  flex-shrink: 0;
+  align-self: center;
+  width: min(100%, 400px);
+  max-width: 400px;
+  text-align: center;
+  font-size: 11px;
+  color: rgba(22, 24, 35, 0.5);
+  line-height: 1.5;
+  margin: 28px 0 0;
+}
+
+.login-modal__legal a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.login-modal__legal a:hover {
+  text-decoration: underline;
+}
+
+.login-modal__footer {
+  flex-shrink: 0;
+  align-self: center;
+  width: min(100%, 400px);
+  max-width: 400px;
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid #e3e3e4;
+  text-align: center;
+  font-size: 15px;
+  color: #161823;
+}
+
+.login-modal__signup {
+  border: none;
+  background: none;
+  padding: 0;
+  color: #fe2c55;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.login-modal__signup:hover {
+  text-decoration: underline;
+}
+
+/* Form đăng ký / đăng nhập email: cùng kích thước popup, footer dính đáy */
+.login-modal--auth-form > .signup-email {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.login-modal--auth-form .login-modal__footer {
+  margin-top: auto;
+  flex-shrink: 0;
+  padding-top: 18px;
+}
+
+.signup-email {
+  width: min(100%, 400px);
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+}
+
+.signup-email__top {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.signup-email__back {
+  grid-column: 1;
+  border: none;
+  background: transparent;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #161823;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.signup-email__back:hover {
+  background: #f1f1f2;
+}
+
+.signup-email__heading {
+  grid-column: 2;
+  margin: 0;
+  font-size: 1.28rem;
+  font-weight: 700;
+  text-align: center;
+  color: #161823;
+}
+
+.signup-email__top-spacer {
+  grid-column: 3;
+  width: 40px;
+}
+
+.signup-email__scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 12px 0 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  gap: clamp(14px, 3.5vmin, 28px);
+}
+
+.signup-email--login .signup-email__scroll {
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.signup-email__block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.signup-email__label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #161823;
+}
+
+.signup-email__dob-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.signup-email__select {
+  padding: 11px 10px;
+  border: 1px solid #e3e3e4;
+  border-radius: 8px;
+  background: #f8f8f8;
+  font-size: 14px;
+  color: #161823;
+  cursor: pointer;
+}
+
+.signup-email__hint {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(22, 24, 35, 0.5);
+  line-height: 1.45;
+}
+
+.signup-email__row-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.signup-email__email-title {
+  font-weight: 700;
+  font-size: 16px;
+  color: #161823;
+}
+
+.signup-email__link {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(22, 24, 35, 0.55);
+  cursor: pointer;
+}
+
+.signup-email__link:hover {
+  text-decoration: underline;
+}
+
+.signup-email__input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 14px;
+  border: 1px solid #e3e3e4;
+  border-radius: 8px;
+  background: #f8f8f8;
+  font-size: 15px;
+  color: #161823;
+}
+
+.signup-email__input:focus {
+  outline: none;
+  border-color: #b0b0b3;
+}
+
+.signup-email__input--error {
+  border-color: #fe2c55;
+  background: rgba(254, 44, 85, 0.06);
+}
+
+.signup-email__input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.signup-email__input-wrap--error .signup-email__input {
+  border-color: #fe2c55;
+  background: rgba(254, 44, 85, 0.06);
+}
+
+.signup-email__input-wrap--error .signup-email__suffix-btn {
+  color: #fe2c55;
+}
+
+.signup-email__input--has-suffix {
+  padding-right: 44px;
+}
+
+.signup-email__suffix-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: rgba(22, 24, 35, 0.5);
+  cursor: pointer;
+  padding: 8px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.signup-email__code-row {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid #e3e3e4;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f8f8f8;
+}
+
+.signup-email__input--code {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.signup-email__send-code {
+  flex-shrink: 0;
+  padding: 0 16px;
+  border: none;
+  border-left: 1px solid #e3e3e4;
+  background: #f8f8f8;
+  font-size: 15px;
+  font-weight: 600;
+  color: #161823;
+  cursor: pointer;
+}
+
+.signup-email__send-code:hover {
+  background: #f0f0f0;
+}
+
+.signup-email__consent {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 12px;
+  color: rgba(22, 24, 35, 0.65);
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.signup-email__consent input {
+  margin-top: 4px;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.signup-email__next {
+  width: 100%;
+  margin-top: 4px;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  background: #fe2c55;
+  color: #fff;
+}
+
+.signup-email__error {
+  margin: 0 0 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  color: #fe2c55;
+  background: rgba(254, 44, 85, 0.08);
+  border-radius: 6px;
+}
+
+/* Chỉ hiện khi có lỗi: không margin dưới dư, không chiếm hàng khi ẩn (React không render node) */
+.signup-email__error--inline {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* Lỗi đăng nhập email: nền trắng giống popup, chữ đỏ, sát mé trái */
+.signup-email--login .signup-email__error.signup-email__error--inline {
+  background: #fff;
+  color: #fe2c55;
+  padding: 0.45rem 0.75rem 0.45rem 0;
+}
+
+.login-email__forgot {
+  align-self: flex-start;
+  margin: 2px 0 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(22, 24, 35, 0.65);
+  cursor: pointer;
+}
+
+.login-email__forgot:hover {
+  text-decoration: underline;
+}
+
+.signup-email__next:disabled {
+  background: #e3e3e4;
+  color: rgba(22, 24, 35, 0.35);
+  cursor: not-allowed;
+}
+
+/* Toast render qua portal → body, z-index cao để không bị video / layout đè */
+.app-toast {
+  position: fixed;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2147483000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 20px 11px 16px;
+  border-radius: 999px;
+  background: #fff;
+  color: #fe2c55;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  border: 1px solid rgba(254, 44, 85, 0.35);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  animation: app-toast-in 0.28s ease;
+  pointer-events: none;
+}
+
+.app-toast__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 12px;
+  color: inherit;
+  background: transparent;
+}
+
+.app-toast__text {
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+@keyframes app-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}

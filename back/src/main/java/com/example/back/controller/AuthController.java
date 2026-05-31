@@ -15,8 +15,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.back.dto.ApiResponse;
+import com.example.back.dto.ForgotPasswordRequest;
 import com.example.back.dto.LoginRequest;
 import com.example.back.dto.RegisterRequest;
+import com.example.back.dto.ResetForgotPasswordRequest;
+import com.example.back.dto.VerifyForgotPasswordOtpRequest;
 import com.example.back.dto.auth.AccessTokenResponse;
 import com.example.back.dto.auth.AuthTokenBundle;
 import com.example.back.exception.InvalidTokenException;
@@ -83,6 +86,25 @@ public class AuthController {
   @ResponseStatus(HttpStatus.CREATED)
   public ApiResponse<Map<String, Object>> register(@Valid @RequestBody RegisterRequest body) {
     return ApiResponse.of(201, "Created successfully", authService.register(body));
+  }
+
+  @PostMapping("/forgot-password/send-otp")
+  public ApiResponse<Map<String, Object>> sendForgotPasswordOtp(
+      @Valid @RequestBody ForgotPasswordRequest body) {
+    return ApiResponse.of(200, "Đã gửi mã OTP", authService.sendForgotPasswordOtp(body));
+  }
+
+  @PostMapping("/forgot-password/verify-otp")
+  public ApiResponse<Map<String, Object>> verifyForgotPasswordOtp(
+      @Valid @RequestBody VerifyForgotPasswordOtpRequest body) {
+    return ApiResponse.of(200, "OTP hợp lệ", authService.verifyForgotPasswordOtp(body));
+  }
+
+  @PostMapping("/forgot-password/reset")
+  public ApiResponse<Object> resetForgotPassword(
+      @Valid @RequestBody ResetForgotPasswordRequest body) {
+    authService.resetForgotPassword(body);
+    return ApiResponse.of(200, "Đã cập nhật mật khẩu mới", null);
   }
 
   private ResponseCookie refreshCookie(String refreshTokenValue) {

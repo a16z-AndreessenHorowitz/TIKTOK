@@ -28,6 +28,7 @@ public class VideosResponseDTO {
   private Long likeCount;
   private Long commentCount;
   private Long shareCount;
+  private Integer duration;
 
   private Boolean isLiked;
   private Boolean isFollowed;

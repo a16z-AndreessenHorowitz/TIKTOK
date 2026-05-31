@@ -31,9 +31,11 @@ public class VideoController {
 
   @GetMapping("/feed")
   public ApiResponse<VideoFeedResponseDTO> getVideoFeed(
+      @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
       @RequestParam(value = "cursor", required = false) String cursor,
       @RequestParam(value = "limit", required = false) Integer limit) {
-    return ApiResponse.of(200, "Success", videoService.getFeed(cursor, limit));
+    return ApiResponse.of(
+        200, "Success", videoService.getFeed(cursor, limit, readOptionalUserId(authorization)));
   }
 
   @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -55,5 +57,12 @@ public class VideoController {
       throw new InvalidTokenException();
     }
     return jwtTokenService.parseAccessToken(token).userId();
+  }
+
+  private Long readOptionalUserId(String authorization) {
+    if (authorization == null || authorization.isBlank()) {
+      return null;
+    }
+    return requireUserId(authorization);
   }
 }

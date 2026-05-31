@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "redis: up",
+      "type": "shell",
+      "command": "docker compose -f docker-compose.realtime.yml up -d",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "back: spring-boot:run",
+      "type": "shell",
+      "command": "JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./mvnw spring-boot:run",
+      "options": {
+        "cwd": "${workspaceFolder}/back"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "realtime-gateway: spring-boot:run",
+      "type": "shell",
+      "command": "JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ../back/mvnw spring-boot:run",
+      "options": {
+        "cwd": "${workspaceFolder}/realtime-gateway"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "front: dev",
+      "type": "shell",
+      "command": "pnpm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/front"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

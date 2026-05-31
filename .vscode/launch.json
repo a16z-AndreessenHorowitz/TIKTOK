@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "RealtimeGatewayApplication",
+      "request": "launch",
+      "mainClass": "com.example.realtime.RealtimeGatewayApplication",
+      "projectName": ""
+    },
+    {
+      "type": "java",
+      "name": "Back API (Spring Boot)",
+      "request": "launch",
+      "mainClass": "com.example.back.BackApplication",
+      "projectName": "back",
+      "cwd": "${workspaceFolder}/back"
+    },
+    {
+      "type": "java",
+      "name": "Realtime Gateway (Spring Boot)",
+      "request": "launch",
+      "mainClass": "com.example.realtime.RealtimeGatewayApplication",
+      "projectName": "realtime-gateway",
+      "cwd": "${workspaceFolder}/realtime-gateway"
+    }
+  ]
+}

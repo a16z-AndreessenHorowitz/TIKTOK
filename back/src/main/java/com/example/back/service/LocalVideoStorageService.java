@@ -55,7 +55,7 @@ public class LocalVideoStorageService {
     }
 
     String encodedFileName = UriUtils.encodePathSegment(fileName, StandardCharsets.UTF_8);
-    return new StoredVideo(normalizeUrlPrefix(urlPrefix) + "/" + encodedFileName, null);
+    return new StoredVideo(normalizeUrlPrefix(urlPrefix) + "/" + encodedFileName, null, destination);
   }
 
   private static void validateFile(MultipartFile file) {
@@ -121,5 +121,5 @@ public class LocalVideoStorageService {
     return prefix.endsWith("/") ? prefix.substring(0, prefix.length() - 1) : prefix;
   }
 
-  public record StoredVideo(String url, String thumbnailUrl) {}
+  public record StoredVideo(String url, String thumbnailUrl, Path path) {}
 }

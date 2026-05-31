@@ -1,0 +1,127 @@
+.TopRightActionBar {
+  position: fixed;
+  top: 25px;
+  right: 25px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  height: 50px;
+  width: auto;
+  max-width: min(380px, calc(100vw - 48px));
+  padding: 0 12px 0 14px;
+  border-radius: 30px;
+  background-color: #efefef;
+  overflow: hidden;
+  box-sizing: border-box;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease,
+    visibility 0.18s ease;
+}
+
+.app-layout:has(.feed-container--comments-open) .TopRightActionBar {
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+}
+
+.TopRightActionBar__inner {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+}
+
+.TopRightActionBar__item {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.TopRightActionBar__item--grow {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 42%;
+}
+
+.TopRightActionBar__link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.TopRightActionBar__link svg {
+  flex-shrink: 0;
+  width: 1em;
+  height: 1em;
+}
+
+.TopRightActionBar__link span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.TopRightActionBar__auth {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  margin-left: auto;
+}
+
+.TopRightActionBar__divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 18px;
+  margin: 0 6px 0 2px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.TopRightActionBar__login-btn {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: #fe2c55;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.TopRightActionBar__login-btn:hover {
+  background: #e6254c;
+}
+
+.ImgAvatar {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.ImgAvatar--logged-in {
+  width: 24px;
+  height: 24px;
+}

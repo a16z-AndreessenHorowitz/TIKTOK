@@ -34,6 +34,9 @@ public class UserEntity {
   @Column(nullable = false, length = 100)
   private String username;
 
+  @Column(name = "display_name", length = 80)
+  private String displayName;
+
   /**
    * Stored lowercase only. Unique constraint {@code uk_users_email} is backed by a B-tree
    * index in InnoDB; queries must use {@code WHERE email = ?} (not {@code LOWER(email)}) to use it.
@@ -72,6 +75,9 @@ public class UserEntity {
     }
     if (followingCount == null) {
       followingCount = 0L;
+    }
+    if (displayName == null || displayName.isBlank()) {
+      displayName = username;
     }
   }
 }
