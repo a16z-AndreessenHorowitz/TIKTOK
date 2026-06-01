@@ -1,6 +1,8 @@
 package com.example.back.entity;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,7 +11,10 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -59,6 +64,17 @@ public class VideoEntity {
   
   @Column(name = "created_at")
   private LocalDateTime createdAt;
+
+  @ManyToMany
+  @JoinTable(
+      name = "video_hashtags",
+      joinColumns = @JoinColumn(name = "video_id"),
+      inverseJoinColumns = @JoinColumn(name = "tag_id"),
+      indexes = {
+          @Index(name = "idx_tag_id", columnList = "tag_id")
+      }
+  )
+  private Set<HashtagEntity> hashtags = new HashSet<>();
 
   @PrePersist
   void prePersist() {

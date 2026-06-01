@@ -231,25 +231,24 @@
 }
 
 .upload-preview-phone {
-  --phone-width: calc(var(--video-frame-width) + 5px);
+  --video-frame-width: 274px;
+  --phone-width: var(--video-frame-width);
   --phone-height: 620px;
   --phone-top-height: 70px;
-  --video-frame-width: 274px;
   --video-frame-height: 392px;
 
   box-sizing: border-box;
   width: min(100%, var(--phone-width));
   height: var(--phone-height);
   margin: 0 auto;
-  padding: 1px 1px 1px;
+  padding: 1px 2px 1px; /* viền 2 bên điện thoại */
   background: #000;
   border-radius: 19px;
   display: grid;
   grid-template-rows: var(--phone-top-height) var(--video-frame-height) 1fr;
   gap: 0;
   align-items: center;
-  justify-content: center;
-  justify-items: center;
+  justify-items: stretch;
   overflow: hidden;
 }
 
@@ -363,7 +362,7 @@
 }
 
 .upload-preview-phone__video-frame {
-  width: min(100%, var(--video-frame-width));
+  width: 100%;
   height: var(--video-frame-height);
   max-width: 100%;
   max-height: 100%;

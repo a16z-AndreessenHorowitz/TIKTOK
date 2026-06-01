@@ -38,6 +38,7 @@ public class VideoService {
   private final LikeRepository likeRepository;
   private final LocalVideoStorageService localVideoStorageService;
   private final VideoMetadataService videoMetadataService;
+  private final HashtagService hashtagService;
 
   @Transactional(readOnly = true)
   public VideoFeedResponseDTO getFeed(String cursor, Integer limit, Long viewerUserId) {
@@ -75,7 +76,10 @@ public class VideoService {
     video.setPrivacy("public");
     video.setStatus("published");
 
-    return toDto(videoRepository.save(video));
+    video = videoRepository.save(video);
+    hashtagService.processHashtags(video.getId(), caption);
+
+    return toDto(video);
   }
 
   private VideosResponseDTO toDto(VideoEntity video) {

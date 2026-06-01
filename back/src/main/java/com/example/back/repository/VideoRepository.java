@@ -72,19 +72,6 @@ public class VideoRepository {
     return getLongColumn(videoId, "comment_count");
   }
 
-  public List<VideoEntity> findFeed() {
-    return entityManager
-        .createQuery(
-            """
-            SELECT v
-            FROM VideoEntity v
-            JOIN FETCH v.user
-            ORDER BY v.createdAt DESC, v.id DESC
-            """,
-            VideoEntity.class)
-        .getResultList();
-  }
-
   public List<VideoEntity> findFeedPage(LocalDateTime cursorCreatedAt, Long cursorId, int limit) {
     String cursorWhere =
         cursorCreatedAt == null || cursorId == null
