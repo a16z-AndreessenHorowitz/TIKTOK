@@ -7,10 +7,13 @@ import MainLayout from "../layouts/MainLayout";
 import StudioLayout from "../layouts/StudioLayout";
 import RequireAuth from "../../features/auth/components/RequireAuth";
 
+import MessagesPage from "../../pages/messages/MessagesPage";
+
 const clientRoutes = (
   <>
     <Route element={<MainLayout />}>
       <Route path="/" element={<Home />} />
+      <Route path="/messages" element={<MessagesPage />} />
       <Route path="/:username" element={<ProfilePage />} />
     </Route>
 

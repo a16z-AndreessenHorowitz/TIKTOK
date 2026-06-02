@@ -136,6 +136,15 @@
   color: #fe2c55;
 }
 
+.VideoActionBox__action--active[aria-label="Lưu"] .VideoActionBox__icon {
+  background: rgba(250, 206, 21, 0.15);
+  color: #face15;
+}
+
+.VideoActionBox__action[aria-label="Lưu"] .VideoActionBox__icon i {
+  transform: translateY(1.5px);
+}
+
 .VideoActionBox__count {
   display: block;
   width: 100%;
@@ -155,7 +164,7 @@
   .VideoActionBox {
     position: absolute;
     right: 10px;
-    bottom: 16px;
+    bottom: 10px;
     flex-basis: auto;
     margin-bottom: 0;
     gap: 12px;

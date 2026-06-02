@@ -56,6 +56,7 @@ public class VideoFeedItemDTO {
     private Long likes;
     private Long comments;
     private Long shares;
+    private Long saves;
   }
 
   @Data
@@ -64,5 +65,6 @@ public class VideoFeedItemDTO {
   public static class ViewerInfo {
     private Boolean liked;
     private Boolean followed;
+    private Boolean saved;
   }
 }

@@ -1,0 +1,132 @@
+.MessagesPage {
+  display: flex;
+  height: 100dvh;
+  background: #fff;
+  border-top: 1px solid #e3e3e4;
+  overflow: hidden;
+  width: 100%;
+}
+
+.MessagesPage__sidebar {
+  width: 320px;
+  border-right: 1px solid #e3e3e4;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.MessagesPage__sidebar-header {
+  padding: 16px 24px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.MessagesPage__sidebar-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  color: #161823;
+}
+
+.MessagesPage__sidebar-actions {
+  display: flex;
+  gap: 16px;
+  font-size: 20px;
+  color: #161823;
+  cursor: pointer;
+}
+
+.MessagesPage__chat-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 8px 16px;
+}
+
+.MessagesPage__chat-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  gap: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.MessagesPage__chat-item:hover {
+  background: rgba(22, 24, 35, 0.03);
+}
+
+.MessagesPage__chat-item--active {
+  background: rgba(22, 24, 35, 0.03);
+}
+
+.MessagesPage__avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.MessagesPage__chat-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.MessagesPage__chat-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #161823;
+  margin: 0 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.MessagesPage__chat-preview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: rgba(22, 24, 35, 0.5);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.MessagesPage__chat-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.MessagesPage__chat-time {
+  flex-shrink: 0;
+}
+
+.MessagesPage__content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+
+.MessagesPage__empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: rgba(22, 24, 35, 0.5);
+}
+
+.MessagesPage__empty-icon {
+  font-size: 80px;
+  color: #e3e3e4;
+  margin-bottom: 24px;
+}

@@ -1,6 +1,6 @@
 import { formatActionCount } from "./videoActionCount";
 
-function VideoActionButton({ label, iconClassName, count, onClick, active = false }) {
+function VideoActionButton({ label, iconClassName, count, onClick, active = false, showCount = true }) {
   const activeClassName = active ? " VideoActionBox__action--active" : "";
 
   return (
@@ -14,7 +14,12 @@ function VideoActionButton({ label, iconClassName, count, onClick, active = fals
       <span className="VideoActionBox__icon" aria-hidden="true">
         <i className={iconClassName} />
       </span>
-      <span className="VideoActionBox__count">{formatActionCount(count)}</span>
+      <span
+        className="VideoActionBox__count"
+        style={!showCount ? { visibility: "hidden", minHeight: "5px" } : undefined}
+      >
+        {showCount ? formatActionCount(count) : ""}
+      </span>
     </button>
   );
 }

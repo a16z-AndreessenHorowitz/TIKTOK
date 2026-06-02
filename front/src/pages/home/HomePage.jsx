@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { followUser, unfollowUser } from "../../api/followsApi";
 import { recordVideoShare, recordVideoView } from "../../api/videoInteractionsApi";
 import { likeVideo, unlikeVideo } from "../../api/videoLikesApi";
+import { saveVideo, unsaveVideo } from "../../api/videoSavesApi";
 import { fetchVideoFeedPage } from "../../api/videosApi";
 import VideoCommentPanel from "../../features/comments/components/VideoCommentPanel";
 import { useAuth } from "../../features/auth/hooks/useAuth";
@@ -68,8 +69,10 @@ function normalizeVideo(video, index) {
     commentCount: video.commentCount ?? stats.comments ?? 0,
     viewCount: video.viewCount ?? stats.views ?? 0,
     shareCount: video.shareCount ?? stats.shares ?? 0,
+    saveCount: video.saveCount ?? stats.saves ?? 0,
     isLiked: Boolean(video.isLiked ?? video.liked ?? viewer.liked),
     isFollowed: Boolean(video.isFollowed ?? video.followed ?? viewer.followed),
+    isSaved: Boolean(video.isSaved ?? video.saved ?? viewer.saved),
     followerCount: video.followerCount ?? author.followerCount ?? null,
     originalVideoUrl,
     playbackUrl: originalVideoUrl,
@@ -200,6 +203,7 @@ export default function Home() {
   const [expandedCaptions, setExpandedCaptions] = useState(() => new Set());
   const [videoRatios, setVideoRatios] = useState({});
   const [likeLoadingVideoIds, setLikeLoadingVideoIds] = useState(() => new Set());
+  const [saveLoadingVideoIds, setSaveLoadingVideoIds] = useState(() => new Set());
   const [followLoadingUserIds, setFollowLoadingUserIds] = useState(() => new Set());
   /** Một lần bật/tắt tiếng & mức volume cho cả feed (giống TikTok) */
   const [feedAudio, setFeedAudio] = useState(readFeedAudio);
@@ -306,6 +310,30 @@ export default function Home() {
             ? {
                 ...video.stats,
                 likes: likeCount ?? video.stats.likes,
+              }
+            : video.stats,
+        };
+      }),
+    );
+  }, []);
+
+  const updateVideoSaveState = useCallback((videoId, saved, saveCount = null) => {
+    if (videoId == null) return;
+
+    setVideos((currentVideos) =>
+      currentVideos.map((video) => {
+        if (String(video?.id) !== String(videoId)) {
+          return video;
+        }
+
+        return {
+          ...video,
+          isSaved: Boolean(saved),
+          saveCount: saveCount ?? video.saveCount,
+          stats: video.stats
+            ? {
+                ...video.stats,
+                saves: saveCount ?? video.stats?.saves,
               }
             : video.stats,
         };
@@ -449,6 +477,54 @@ export default function Home() {
       }
     },
     [isLoggedIn, likeLoadingVideoIds, updateVideoLikeState],
+  );
+
+  const toggleVideoSave = useCallback(
+    async ({ videoId, isSaved, saveCount }) => {
+      if (videoId == null) return;
+
+      if (!isLoggedIn) {
+        openLoginModal();
+        return;
+      }
+
+      const videoKey = String(videoId);
+      if (saveLoadingVideoIds.has(videoKey)) {
+        return;
+      }
+
+      setSaveLoadingVideoIds((currentIds) => {
+        const nextIds = new Set(currentIds);
+        nextIds.add(videoKey);
+        return nextIds;
+      });
+
+      const nextSaved = !isSaved;
+      const currentSaveCount = Number(saveCount);
+      const optimisticSaveCount = Number.isFinite(currentSaveCount)
+        ? Math.max(0, currentSaveCount + (nextSaved ? 1 : -1))
+        : null;
+      updateVideoSaveState(videoId, nextSaved, optimisticSaveCount);
+
+      try {
+        const status = nextSaved ? await saveVideo(videoId) : await unsaveVideo(videoId);
+        updateVideoSaveState(videoId, status?.saved, status?.saveCount);
+      } catch (err) {
+        updateVideoSaveState(videoId, isSaved, saveCount);
+        if (err?.status === 401 || err?.status === 403) {
+          openLoginModal();
+        } else {
+          console.error(err);
+        }
+      } finally {
+        setSaveLoadingVideoIds((currentIds) => {
+          const nextIds = new Set(currentIds);
+          nextIds.delete(videoKey);
+          return nextIds;
+        });
+      }
+    },
+    [isLoggedIn, saveLoadingVideoIds, updateVideoSaveState],
   );
 
   const toggleAuthorFollow = useCallback(
@@ -952,6 +1028,7 @@ export default function Home() {
                     likes: video.likeCount,
                     liked: video.isLiked,
                     comments: video.commentCount,
+                    saved: video.isSaved,
                     saves: video.saveCount,
                     shares: video.shareCount,
                   }}
@@ -966,6 +1043,13 @@ export default function Home() {
                     })
                   }
                   onComment={() => toggleCommentPanel(index)}
+                  onSave={() =>
+                    toggleVideoSave({
+                      videoId: video.id,
+                      isSaved: video.isSaved,
+                      saveCount: video.saveCount,
+                    })
+                  }
                   onShare={() => handleVideoShare(video.id)}
                   isCommentOpen={showCommentPanel && activeIndex === index}
                 />

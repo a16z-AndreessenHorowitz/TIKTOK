@@ -649,3 +649,46 @@
     transform: translateX(-50%) translateY(0);
   }
 }
+
+.sidebar--collapsed {
+  width: 72px !important;
+  border-right: 1.5px solid #e0e0e0;
+  padding-left: 0 !important;
+}
+
+.sidebar--collapsed .sidebar-text,
+.sidebar--collapsed .box_search,
+.sidebar--collapsed .DivFooterContainer,
+.sidebar--collapsed .box_login,
+.sidebar--collapsed hr {
+  display: none !important;
+}
+
+.sidebar--collapsed .DivMainNavContainer .box_ul .box_li {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.sidebar--collapsed .btn.p-0 {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  margin: 0 auto;
+}
+
+/* Avatar profile sát vào đường kẻ bên phải */
+.sidebar--collapsed .sidebar-nav-avatar {
+  width: 36px !important;
+  height: 36px !important;
+}
+
+.sidebar--collapsed .box_li--profile {
+  justify-content: center !important;
+}
+
+.sidebar--collapsed .image__logo {
+  padding-left: 0;
+  display: flex;
+  justify-content: center;
+}

@@ -61,6 +61,9 @@ public class VideoEntity {
 
   @Column(name = "comment_count")
   private Long commentCount;
+
+  @Column(name = "save_count")
+  private Long saveCount;
   
   @Column(name = "created_at")
   private LocalDateTime createdAt;
@@ -89,6 +92,9 @@ public class VideoEntity {
     }
     if (commentCount == null) {
       commentCount = 0L;
+    }
+    if (saveCount == null) {
+      saveCount = 0L;
     }
   }
 }

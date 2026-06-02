@@ -4,6 +4,10 @@
   padding-top: 17px;
   padding-left: 20px;
   position: fixed;
+  transition: width 0.2s ease;
+}
+.sidebar--collapsed {
+  /* override: khi thu hẹp ở /messages */
 }
 .content{
   margin-left: 240px;
@@ -12,10 +16,23 @@
   height: 100dvh;
   overflow-y: auto;
   overflow-x: hidden;
-  position: relative
+  position: relative;
+  transition: margin-left 0.2s ease, width 0.2s ease;
+}
+/* Khi sidebar thu hẹp (trang /messages), content lấp vào sát đường kẻ */
+.content--sidebar-collapsed {
+  margin-left: 72px;
+  width: calc(100% - 72px);
 }
 .content-inner {
   width: 90%;        /* 🔥 chừa 10% */
   max-width: 1200px; /* optional cho đẹp desktop */
   min-height: 100%;
+}
+
+/* Trang messages: content-inner chiếm full width để MessagesPage lấp đầy */
+.content--sidebar-collapsed .content-inner {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
 }

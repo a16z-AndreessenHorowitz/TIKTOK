@@ -79,7 +79,11 @@ function VideoActionBox({
           onClick={onComment}
           active={isCommentOpen}
         />
-        <VideoSaveAction count={actionCounts.saves} onClick={onSave} />
+        <VideoSaveAction
+          count={actionCounts.saves}
+          active={Boolean(actionCounts.saved)}
+          onClick={onSave}
+        />
         <VideoShareAction count={actionCounts.shares} onClick={onShare} />
       </div>
     </aside>

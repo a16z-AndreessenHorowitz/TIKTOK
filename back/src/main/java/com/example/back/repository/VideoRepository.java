@@ -64,8 +64,30 @@ public class VideoRepository {
     return getLongColumn(videoId, "comment_count");
   }
 
+  public long incrementSaveCount(long videoId) {
+    entityManager
+        .createNativeQuery(
+            "UPDATE videos SET save_count = COALESCE(save_count, 0) + 1 WHERE id = ?")
+        .setParameter(1, videoId)
+        .executeUpdate();
+    return getLongColumn(videoId, "save_count");
+  }
+
+  public long decrementSaveCount(long videoId) {
+    entityManager
+        .createNativeQuery(
+            "UPDATE videos SET save_count = GREATEST(COALESCE(save_count, 0) - 1, 0) WHERE id = ?")
+        .setParameter(1, videoId)
+        .executeUpdate();
+    return getLongColumn(videoId, "save_count");
+  }
+
   public long getLikeCount(long videoId) {
     return getLongColumn(videoId, "like_count");
+  }
+
+  public long getSaveCount(long videoId) {
+    return getLongColumn(videoId, "save_count");
   }
 
   public long getCommentCount(long videoId) {

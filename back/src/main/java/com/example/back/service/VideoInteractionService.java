@@ -24,8 +24,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class VideoInteractionService {
 
-  private static final int SKIP_WATCH_TIME_SECONDS = 3;
-  private static final BigDecimal SKIP_COMPLETION_RATE = new BigDecimal("0.10");
+  private static final int SKIP_WATCH_TIME_SECONDS = 2;
+  private static final BigDecimal SKIP_COMPLETION_RATE = new BigDecimal("0.15");
 
   private final VideoInteractionRepository videoInteractionRepository;
   private final UserRepository userRepository;
@@ -62,7 +62,14 @@ public class VideoInteractionService {
                 userId, videoId, VideoInteractionType.VIEW)
             > 0;
 
-    return toDto(save(userId, video, interactionType, watchTime, completionRate, rewatch));
+    VideoInteraction saved = save(userId, video, interactionType, watchTime, completionRate, rewatch);
+
+    if (interactionType == VideoInteractionType.VIEW && !rewatch) {
+      video.setViewCount((video.getViewCount() == null ? 0 : video.getViewCount()) + 1);
+      videoRepository.save(video);
+    }
+
+    return toDto(saved);
   }
 
   @Transactional
