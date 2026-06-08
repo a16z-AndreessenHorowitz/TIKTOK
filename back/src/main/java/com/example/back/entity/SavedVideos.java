@@ -29,9 +29,6 @@ import lombok.Setter;
     },
     indexes = {
       @Index(
-          name = "idx_saved_videos_user_video",
-          columnList = "user_id,video_id"),
-      @Index(
           name = "idx_saved_videos_video",
           columnList = "video_id")
     })

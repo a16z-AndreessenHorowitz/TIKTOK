@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.back.dto.ApiResponse;
 import com.example.back.dto.RecordVideoViewRequest;
 import com.example.back.dto.VideoInteractionDTO;
-import com.example.back.entity.VideoInteraction.VideoInteractionType;
 import com.example.back.exception.InvalidTokenException;
 import com.example.back.security.JwtTokenService;
 import com.example.back.service.VideoInteractionService;
+import com.example.back.service.VideoShareService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class VideoInteractionController {
 
   private final VideoInteractionService videoInteractionService;
+  private final VideoShareService videoShareService;
   private final JwtTokenService jwtTokenService;
 
   @PostMapping("/{videoId}/interactions/view")
@@ -40,14 +41,12 @@ public class VideoInteractionController {
   }
 
   @PostMapping("/{videoId}/share")
-  public ApiResponse<VideoInteractionDTO> recordShare(
+  public ApiResponse<Void> recordShare(
       @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
       @PathVariable long videoId) {
     long userId = requireUserId(authorization);
-    return ApiResponse.of(
-        201,
-        "Shared",
-        videoInteractionService.recordAction(userId, videoId, VideoInteractionType.SHARE));
+    videoShareService.share(userId, videoId);
+    return ApiResponse.of(201, "Shared", null);
   }
 
   private long requireUserId(String authorization) {

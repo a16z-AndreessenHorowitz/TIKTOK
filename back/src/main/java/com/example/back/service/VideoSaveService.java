@@ -7,6 +7,7 @@ import com.example.back.dto.VideoSaveStatusDTO;
 import com.example.back.repository.SavedVideoRepository;
 import com.example.back.repository.UserRepository;
 import com.example.back.repository.VideoRepository;
+import com.example.back.repository.VideoScoreDirtyRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,6 +18,7 @@ public class VideoSaveService {
   private final SavedVideoRepository savedVideoRepository;
   private final UserRepository userRepository;
   private final VideoRepository videoRepository;
+  private final VideoScoreDirtyRepository videoScoreDirtyRepository;
 
   @Transactional(readOnly = true)
   public VideoSaveStatusDTO getSaveStatus(long userId, long videoId) {
@@ -41,6 +43,9 @@ public class VideoSaveService {
         inserted > 0
             ? videoRepository.incrementSaveCount(videoId)
             : videoRepository.getSaveCount(videoId);
+    if (inserted > 0) {
+      videoScoreDirtyRepository.markDirty(videoId);
+    }
 
     return VideoSaveStatusDTO.builder()
         .videoId(videoId)
@@ -58,6 +63,9 @@ public class VideoSaveService {
         deleted > 0
             ? videoRepository.decrementSaveCount(videoId)
             : videoRepository.getSaveCount(videoId);
+    if (deleted > 0) {
+      videoScoreDirtyRepository.markDirty(videoId);
+    }
 
     return VideoSaveStatusDTO.builder()
         .videoId(videoId)

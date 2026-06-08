@@ -1,5 +1,6 @@
 package com.example.back.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -23,7 +24,15 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "videos")
+@Table(
+    name = "videos",
+    indexes = {
+      @Index(name = "idx_videos_created_id", columnList = "created_at,id"),
+      @Index(name = "idx_videos_recommendation_created_id", columnList = "recommendation_score,created_at,id"),
+      @Index(
+          name = "idx_videos_user_status_privacy_created_id",
+          columnList = "user_id,status,privacy,created_at,id")
+    })
 @Getter
 @Setter
 @NoArgsConstructor
@@ -64,6 +73,13 @@ public class VideoEntity {
 
   @Column(name = "save_count")
   private Long saveCount;
+
+  @Column(
+      name = "recommendation_score",
+      precision = 10,
+      scale = 2,
+      columnDefinition = "DECIMAL(10,2) DEFAULT 0")
+  private BigDecimal recommendationScore;
   
   @Column(name = "created_at")
   private LocalDateTime createdAt;
@@ -95,6 +111,9 @@ public class VideoEntity {
     }
     if (saveCount == null) {
       saveCount = 0L;
+    }
+    if (recommendationScore == null) {
+      recommendationScore = BigDecimal.ZERO;
     }
   }
 }

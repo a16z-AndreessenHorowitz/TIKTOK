@@ -12,10 +12,10 @@ import com.example.back.dto.VideoCommentDTO;
 import com.example.back.entity.Comments;
 import com.example.back.entity.UserEntity;
 import com.example.back.entity.VideoEntity;
-import com.example.back.entity.VideoInteraction.VideoInteractionType;
 import com.example.back.repository.CommentRepository;
 import com.example.back.repository.UserRepository;
 import com.example.back.repository.VideoRepository;
+import com.example.back.repository.VideoScoreDirtyRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,7 +29,7 @@ public class CommentService {
   private final CommentRepository commentRepository;
   private final VideoRepository videoRepository;
   private final UserRepository userRepository;
-  private final VideoInteractionService videoInteractionService;
+  private final VideoScoreDirtyRepository videoScoreDirtyRepository;
 
   @Transactional(readOnly = true)
   public List<VideoCommentDTO> getVideoComments(long videoId) {
@@ -73,7 +73,7 @@ public class CommentService {
 
     VideoCommentDTO savedComment =
         toDto(commentRepository.save(comment), List.of(), nextVideoCommentCount);
-    videoInteractionService.recordAction(userId, videoId, VideoInteractionType.COMMENT);
+    videoScoreDirtyRepository.markDirty(videoId);
     return savedComment;
   }
 

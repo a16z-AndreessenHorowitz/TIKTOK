@@ -1,6 +1,8 @@
 package com.example.back.repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -10,6 +12,7 @@ import com.example.back.entity.VideoEntity;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
 
 @Repository
@@ -94,14 +97,180 @@ public class VideoRepository {
     return getLongColumn(videoId, "comment_count");
   }
 
-  public List<VideoEntity> findFeedPage(LocalDateTime cursorCreatedAt, Long cursorId, int limit) {
-    String cursorWhere =
-        cursorCreatedAt == null || cursorId == null
-            ? ""
-            : """
-              WHERE v.createdAt < :cursorCreatedAt
-                 OR (v.createdAt = :cursorCreatedAt AND v.id < :cursorId)
-              """;
+  public void refreshRecommendationScore(long videoId) {
+    entityManager
+        .createNativeQuery(recommendationScoreUpdateSql("WHERE v.id = ?"))
+        .setParameter(1, videoId)
+        .executeUpdate();
+  }
+
+  private static String recommendationScoreUpdateSql(String whereClause) {
+    return """
+        UPDATE videos v
+        SET recommendation_score = GREATEST(
+            (
+              COALESCE(v.like_count, 0) * 3
+              + COALESCE(v.comment_count, 0) * 5
+              + (
+                  SELECT COUNT(*)
+                  FROM shares s
+                  WHERE s.video_id = v.id
+                ) * 8
+              + COALESCE(v.save_count, 0) * 4
+              + COALESCE((
+                  SELECT AVG(vi.completion_rate)
+                  FROM video_interactions vi
+                  WHERE vi.video_id = v.id
+                    AND vi.interaction_type IN ('VIEW', 'SKIP')
+                ), 0) * 100
+              + (
+                  SELECT COUNT(*)
+                  FROM video_interactions ri
+                  WHERE ri.video_id = v.id
+                    AND ri.is_rewatch = TRUE
+                ) * 20
+              + LOG(COALESCE(v.view_count, 0) + 1) * 10
+              - (TIMESTAMPDIFF(HOUR, v.created_at, CURRENT_TIMESTAMP) / 24) * 5
+            ),
+            0
+          )
+        """
+        + whereClause;
+  }
+
+  public List<VideoEntity> findFeedPage(
+      Long viewerUserId,
+      List<Long> excludedVideoIds,
+      BigDecimal cursorRecommendationScore,
+      LocalDateTime cursorCreatedAt,
+      Long cursorId,
+      int limit) {
+    String scoreExpression =
+        """
+        (
+          COALESCE(v.recommendation_score, 0)
+          + COALESCE((
+              SELECT SUM(utp.score)
+              FROM user_tag_preferences utp
+              JOIN video_hashtags vh ON vh.tag_id = utp.tag_id
+              WHERE vh.video_id = v.id
+                AND utp.user_id = :viewerUserId
+            ), 0)
+        )
+        """;
+    List<String> predicates = new ArrayList<>();
+    if (excludedVideoIds != null && !excludedVideoIds.isEmpty()) {
+      predicates.add("v.id NOT IN (:excludedVideoIds)");
+    }
+    if (viewerUserId != null) {
+      predicates.add(
+          """
+          NOT EXISTS (
+            SELECT 1
+            FROM video_interactions i
+            WHERE i.user_id = :viewerUserId
+              AND i.video_id = v.id
+          )
+          """);
+    }
+    if (cursorRecommendationScore != null && cursorCreatedAt != null && cursorId != null) {
+      predicates.add(
+          "("
+              + scoreExpression
+              + """
+              < :cursorRecommendationScore
+              OR (
+                """
+              + scoreExpression
+              + """
+                = :cursorRecommendationScore
+                AND (
+                  v.created_at < :cursorCreatedAt
+                  OR (v.created_at = :cursorCreatedAt AND v.id < :cursorId)
+                )
+              )
+            )
+            """);
+    }
+
+    String whereClause =
+        predicates.isEmpty() ? "" : "WHERE " + String.join("\nAND ", predicates) + "\n";
+
+    Query query =
+        entityManager.createNativeQuery(
+            """
+            SELECT v.*
+            FROM videos v
+            """
+                + whereClause
+                + """
+            ORDER BY
+            """
+                + scoreExpression
+                + """
+            DESC, v.created_at DESC, v.id DESC
+            """,
+            VideoEntity.class);
+
+    query.setParameter("viewerUserId", viewerUserId);
+    if (excludedVideoIds != null && !excludedVideoIds.isEmpty()) {
+      query.setParameter("excludedVideoIds", excludedVideoIds);
+    }
+    if (cursorRecommendationScore != null && cursorCreatedAt != null && cursorId != null) {
+      query.setParameter("cursorRecommendationScore", cursorRecommendationScore);
+      query.setParameter("cursorCreatedAt", cursorCreatedAt);
+      query.setParameter("cursorId", cursorId);
+    }
+
+    return query.setMaxResults(limit).getResultList();
+  }
+
+  public BigDecimal calculateFeedScore(Long viewerUserId, long videoId) {
+    Object value =
+        entityManager
+            .createNativeQuery(
+                """
+                SELECT
+                  COALESCE(v.recommendation_score, 0)
+                  + COALESCE((
+                      SELECT SUM(utp.score)
+                      FROM user_tag_preferences utp
+                      JOIN video_hashtags vh ON vh.tag_id = utp.tag_id
+                      WHERE vh.video_id = v.id
+                        AND utp.user_id = ?
+                    ), 0)
+                FROM videos v
+                WHERE v.id = ?
+                """)
+            .setParameter(1, viewerUserId)
+            .setParameter(2, videoId)
+            .getSingleResult();
+    return value instanceof BigDecimal score ? score : new BigDecimal(String.valueOf(value));
+  }
+
+  public List<VideoEntity> findRandomFeedPage(
+      Long viewerUserId, List<Long> excludedVideoIds, int limit) {
+    if (limit <= 0) {
+      return List.of();
+    }
+
+    List<String> predicates = new ArrayList<>();
+    if (excludedVideoIds != null && !excludedVideoIds.isEmpty()) {
+      predicates.add("v.id NOT IN :excludedVideoIds");
+    }
+    if (viewerUserId != null) {
+      predicates.add(
+          """
+          NOT EXISTS (
+            SELECT i.id
+            FROM VideoInteraction i
+            WHERE i.user.id = :viewerUserId
+              AND i.video.id = v.id
+          )
+          """);
+    }
+    String whereClause =
+        predicates.isEmpty() ? "" : "WHERE " + String.join("\nAND ", predicates) + "\n";
 
     TypedQuery<VideoEntity> query =
         entityManager.createQuery(
@@ -110,15 +279,17 @@ public class VideoRepository {
             FROM VideoEntity v
             JOIN FETCH v.user
             """
-                + cursorWhere
+                + whereClause
                 + """
-            ORDER BY v.createdAt DESC, v.id DESC
+            ORDER BY FUNCTION('RAND')
             """,
             VideoEntity.class);
 
-    if (cursorCreatedAt != null && cursorId != null) {
-      query.setParameter("cursorCreatedAt", cursorCreatedAt);
-      query.setParameter("cursorId", cursorId);
+    if (excludedVideoIds != null && !excludedVideoIds.isEmpty()) {
+      query.setParameter("excludedVideoIds", excludedVideoIds);
+    }
+    if (viewerUserId != null) {
+      query.setParameter("viewerUserId", viewerUserId);
     }
 
     return query.setMaxResults(limit).getResultList();

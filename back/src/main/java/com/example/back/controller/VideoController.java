@@ -33,9 +33,12 @@ public class VideoController {
   public ApiResponse<VideoFeedResponseDTO> getVideoFeed(
       @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
       @RequestParam(value = "cursor", required = false) String cursor,
+      @RequestParam(value = "excludeIds", required = false) String excludeIds,
       @RequestParam(value = "limit", required = false) Integer limit) {
     return ApiResponse.of(
-        200, "Success", videoService.getFeed(cursor, limit, readOptionalUserId(authorization)));
+        200,
+        "Success",
+        videoService.getFeed(cursor, limit, readOptionalUserId(authorization), excludeIds));
   }
 
   @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

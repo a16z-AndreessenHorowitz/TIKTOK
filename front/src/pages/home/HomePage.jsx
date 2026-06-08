@@ -36,13 +36,8 @@ function getThumbnailUrl(video) {
 }
 
 //feed video API trả về rất nhiều trường khác nhau tùy video, nên tạm viết thủ công thế này để dễ xử lý sau này, tránh lỗi kiểu dữ liệu, đồng thời chuẩn hóa một số thứ như URL playback, thumbnail, username, avatar, stats... Cũng là để tránh việc phải xử lý nhiều trường hợp null/undefined ở component chính bên dưới cho đỡ rối. Còn nếu API đã ổn định và thống nhất thì có thể bỏ qua bước này và đọc trực tiếp từ API luôn cũng được.
-async function fetchFeedPage(cursor) {
-  return fetchVideoFeedPage({ cursor, limit: FEED_PAGE_LIMIT });
-}
-
-function createdAtTime(video) {
-  const time = Date.parse(video?.createdAt || "");
-  return Number.isFinite(time) ? time : 0;
+async function fetchFeedPage(cursor, excludeIds = []) {
+  return fetchVideoFeedPage({ cursor, limit: FEED_PAGE_LIMIT, excludeIds });
 }
 
 function normalizeVideo(video, index) {
@@ -80,9 +75,8 @@ function normalizeVideo(video, index) {
   };
 }
 
-function prepareFeed(feed, pinnedVideoId, pinnedVideo) {
+function prepareFeed(feed, pinnedVideo) {
   const feedItems = Array.isArray(feed) ? feed : [];
-  const pinnedId = pinnedVideoId == null ? null : String(pinnedVideoId);
   const normalized = [
     normalizeVideo(pinnedVideo, -1),
     ...feedItems.map((video, index) => normalizeVideo(video, index)),
@@ -95,18 +89,6 @@ function prepareFeed(feed, pinnedVideoId, pinnedVideo) {
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
-    })
-    .sort((a, b) => {
-      if (pinnedId && String(a.id) === pinnedId) return -1;
-      if (pinnedId && String(b.id) === pinnedId) return 1;
-
-      const createdDiff = createdAtTime(b) - createdAtTime(a);
-      if (createdDiff !== 0) return createdDiff;
-
-      const idDiff = Number(b.id || 0) - Number(a.id || 0);
-      if (idDiff !== 0) return idDiff;
-
-      return a.sortIndex - b.sortIndex;
     });
 }
 
@@ -133,6 +115,47 @@ function readFeedAudio() {
 
 function saveFeedAudio(feedAudio) {
   sessionStorage.setItem(FEED_AUDIO_KEY, JSON.stringify(feedAudio));
+}
+
+function clampWatchTime(watchedSeconds, duration) {
+  const normalizedWatchTime = Number.isFinite(watchedSeconds) ? Math.max(watchedSeconds, 0) : 0;
+  if (!Number.isFinite(duration) || duration <= 0) {
+    return normalizedWatchTime;
+  }
+  return Math.min(normalizedWatchTime, duration);
+}
+
+function readPositiveNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? number : null;
+}
+
+function readWatchDuration(video, feedItem) {
+  return (
+    readPositiveNumber(feedItem?.duration)
+    ?? readPositiveNumber(feedItem?.video?.duration)
+    ?? readPositiveNumber(video?.duration)
+    ?? null
+  );
+}
+
+function readNowMs() {
+  return typeof performance !== "undefined" && typeof performance.now === "function"
+    ? performance.now()
+    : Date.now();
+}
+
+function addWatchedPlayingTime(session, duration) {
+  const playingStartedAt = Number(session.playingStartedAt);
+  if (!Number.isFinite(playingStartedAt)) {
+    return;
+  }
+
+  const elapsedSeconds = (readNowMs() - playingStartedAt) / 1000;
+  if (elapsedSeconds > 0) {
+    session.watchedSeconds = clampWatchTime((session.watchedSeconds || 0) + elapsedSeconds, duration);
+  }
+  session.playingStartedAt = readNowMs();
 }
 
 function VideoCaption({ caption, expanded, onExpand, onCollapse }) {
@@ -232,6 +255,39 @@ export default function Home() {
     feedAudioRef.current = feedAudio;
     saveFeedAudio(feedAudio);
   }, [feedAudio]);
+
+  const loadNextFeedPage = useCallback(async () => {
+    const cursor = nextCursorRef.current;
+    if (!cursor || loadingFeedRef.current) return;
+
+    loadingFeedRef.current = true;
+
+    try {
+      const excludeIds = videosRef.current
+        .map((video) => video?.id)
+        .filter((id) => id != null);
+      const page = await fetchFeedPage(cursor, excludeIds);
+
+      nextCursorRef.current = page.nextCursor;
+      setNextCursor(page.nextCursor);
+      setVideos((prev) => prepareFeed([...prev, ...page.items], pinnedVideo));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      loadingFeedRef.current = false;
+    }
+  }, [pinnedVideo]);
+
+  const handleFeedScroll = useCallback(() => {
+    const container = containerRef.current;
+    if (!container || !nextCursorRef.current || loadingFeedRef.current) return;
+
+    const remainingScroll =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    if (remainingScroll <= container.clientHeight * 2) {
+      loadNextFeedPage();
+    }
+  }, [loadNextFeedPage]);
 
   const closeCommentPanel = useCallback(() => {
     setIsCommentPanelOpen(false);
@@ -373,11 +429,19 @@ export default function Home() {
     const session = interactionSessionRef.current;
     if (!session?.videoId) return;
 
+    const activeVideoIndex = videosRef.current.findIndex(
+      (video) => String(video?.id) === String(session.videoId),
+    );
+    const activeVideo = activeVideoIndex >= 0 ? videoRefs.current[activeVideoIndex] : null;
+    const activeFeedItem = activeVideoIndex >= 0 ? videosRef.current[activeVideoIndex] : null;
+    const duration = readWatchDuration(activeVideo, activeFeedItem);
+    addWatchedPlayingTime(session, duration);
+
     interactionSessionRef.current = null;
 
     if (!isLoggedInRef.current) return;
 
-    const watchTime = Math.max(0, Math.round((Date.now() - session.startedAt) / 1000));
+    const watchTime = Math.max(0, Math.round(session.watchedSeconds || 0));
     if (watchTime <= 0) return;
 
     recordVideoView(session.videoId, watchTime, options).catch((err) => {
@@ -401,11 +465,29 @@ export default function Home() {
     }
 
     flushVideoInteraction();
+    const videoEl = videoRefs.current[index];
     interactionSessionRef.current = {
       videoId,
-      startedAt: Date.now(),
+      watchedSeconds: 0,
+      playingStartedAt: videoEl && !videoEl.paused && !videoEl.ended ? readNowMs() : null,
     };
   }, [flushVideoInteraction]);
+
+  const syncVideoWatchTime = useCallback((video, index, { isPlaying = false } = {}) => {
+    const session = interactionSessionRef.current;
+    const videoId = videosRef.current[index]?.id;
+    if (!session || videoId == null || String(session.videoId) !== String(videoId)) {
+      return;
+    }
+
+    const duration = readWatchDuration(video, videosRef.current[index]);
+    addWatchedPlayingTime(session, duration);
+    if (isPlaying && video && !video.paused && !video.ended) {
+      session.playingStartedAt = readNowMs();
+    } else {
+      session.playingStartedAt = null;
+    }
+  }, []);
 
   const handleVideoShare = useCallback(
     async (videoId) => {
@@ -587,11 +669,16 @@ export default function Home() {
   const pauseInactiveVideos = useCallback((activeVideoIndex) => {
     videoRefs.current.forEach((video, index) => {
       if (!video || index === activeVideoIndex) return;
+      const session = interactionSessionRef.current;
+      const videoId = videosRef.current[index]?.id;
+      if (session?.videoId != null && videoId != null && String(session.videoId) === String(videoId)) {
+        flushVideoInteraction();
+      }
       video.muted = true;
       video.pause();
       video.currentTime = 0;
     });
-  }, []);
+  }, [flushVideoInteraction]);
 
   const applyAudioToVideo = useCallback((video, index, audio = feedAudioRef.current) => {
     if (!video) return;
@@ -634,8 +721,8 @@ export default function Home() {
 
   useEffect(() => {
     activeIndexRef.current = activeIndex;
-    pauseInactiveVideos(activeIndex);
     startVideoInteraction(activeIndex);
+    pauseInactiveVideos(activeIndex);
   }, [activeIndex, pauseInactiveVideos, startVideoInteraction]);
 
   useEffect(() => {
@@ -688,7 +775,7 @@ export default function Home() {
         setVideoRatios({});
         setIsCommentPanelOpen(false);
         setLikeLoadingVideoIds(new Set());
-        setVideos(prepareFeed(page.items, pinnedVideoId, pinnedVideo));
+        setVideos(prepareFeed(page.items, pinnedVideo));
       } catch (err) {
         console.error(err);
       } finally {
@@ -704,39 +791,11 @@ export default function Home() {
   }, [pinnedVideo, pinnedVideoId]);
 
   useEffect(() => {
-    containerRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
-  }, [videos.length]);
-
-  useEffect(() => {
     if (!nextCursor) return;
     if (activeIndex < videos.length - FEED_PREFETCH_DISTANCE) return;
 
-    let cancelled = false;
-
-    const prefetchNextPage = async () => {
-      if (loadingFeedRef.current) return;
-      loadingFeedRef.current = true;
-
-      try {
-        const page = await fetchFeedPage(nextCursor);
-        if (cancelled) return;
-
-        nextCursorRef.current = page.nextCursor;
-        setNextCursor(page.nextCursor);
-        setVideos((prev) => prepareFeed([...prev, ...page.items], pinnedVideoId, pinnedVideo));
-      } catch (err) {
-        console.error(err);
-      } finally {
-        loadingFeedRef.current = false;
-      }
-    };
-
-    prefetchNextPage();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [activeIndex, nextCursor, pinnedVideo, pinnedVideoId, videos.length]);
+    loadNextFeedPage();
+  }, [activeIndex, loadNextFeedPage, nextCursor, videos.length]);
 
   // =========================
   // 🎬 AUTO PLAY (TIKTOK STYLE)
@@ -750,18 +809,27 @@ export default function Home() {
         entries.forEach((entry) => {
           const video = entry.target;
 
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.55) {
-            const index = videoRefs.current.findIndex(
-              (v) => v === video
-            );
-            if (index < 0) return;
+          const index = videoRefs.current.findIndex((v) => v === video);
+          if (index < 0) return;
 
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.55) {
+
+            startVideoInteraction(index);
             activeIndexRef.current = index;
             pauseInactiveVideos(index);
             setActiveIndex(index);
 
             playVideo(video, index);
           } else {
+            const session = interactionSessionRef.current;
+            const videoId = videosRef.current[index]?.id;
+            if (
+              session?.videoId != null
+              && videoId != null
+              && String(session.videoId) === String(videoId)
+            ) {
+              flushVideoInteraction();
+            }
             video.muted = true;
             video.pause();
             video.currentTime = 0;
@@ -779,7 +847,7 @@ export default function Home() {
     });
 
     return () => observer.disconnect();
-  }, [pauseInactiveVideos, playVideo, videos]);
+  }, [flushVideoInteraction, pauseInactiveVideos, playVideo, startVideoInteraction, videos]);
 
   useEffect(() => {
     if (!videos.length) return;
@@ -919,6 +987,7 @@ export default function Home() {
       <div
         ref={containerRef}
         className={`feed-container${showCommentPanel ? " feed-container--comments-open" : ""}`}
+        onScroll={handleFeedScroll}
       >
         {videos.map((video, index) => {
           const rowKey = clipListKey(video, index);
@@ -958,6 +1027,11 @@ export default function Home() {
                             e.currentTarget.muted = true;
                           }
                         }}
+                        onPlaying={(e) =>
+                          syncVideoWatchTime(e.currentTarget, index, { isPlaying: true })
+                        }
+                        onPause={(e) => syncVideoWatchTime(e.currentTarget, index)}
+                        onWaiting={(e) => syncVideoWatchTime(e.currentTarget, index)}
                         onError={() => handleVideoError(rowKey)}
                         className="video-player"
                       />

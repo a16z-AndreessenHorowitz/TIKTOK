@@ -22,10 +22,16 @@ function buildUploadForm({ file, caption }) {
   return form;
 }
 
-export async function fetchVideoFeedPage({ cursor, limit = 8 } = {}) {
+export async function fetchVideoFeedPage({ cursor, limit = 8, excludeIds = [] } = {}) {
   const params = new URLSearchParams({ limit: String(limit) });
   if (cursor) {
     params.set("cursor", cursor);
+  }
+  const normalizedExcludeIds = Array.isArray(excludeIds)
+    ? excludeIds.map((id) => String(id).trim()).filter(Boolean)
+    : [];
+  if (normalizedExcludeIds.length) {
+    params.set("excludeIds", normalizedExcludeIds.join(","));
   }
 
   const fetchFeed = (withAuth = true) =>

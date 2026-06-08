@@ -14,9 +14,11 @@ import com.example.back.entity.UserEntity;
 import com.example.back.entity.VideoEntity;
 import com.example.back.entity.VideoInteraction;
 import com.example.back.entity.VideoInteraction.VideoInteractionType;
+import com.example.back.repository.UserTagPreferenceRepository;
 import com.example.back.repository.UserRepository;
 import com.example.back.repository.VideoInteractionRepository;
 import com.example.back.repository.VideoRepository;
+import com.example.back.repository.VideoScoreDirtyRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,10 +28,15 @@ public class VideoInteractionService {
 
   private static final int SKIP_WATCH_TIME_SECONDS = 2;
   private static final BigDecimal SKIP_COMPLETION_RATE = new BigDecimal("0.15");
+  private static final BigDecimal SKIP_TAG_SCORE = new BigDecimal("0.10");
+  private static final BigDecimal VIEW_TAG_SCORE = new BigDecimal("1.00");
+  private static final BigDecimal REWATCH_TAG_SCORE = new BigDecimal("2.00");
 
   private final VideoInteractionRepository videoInteractionRepository;
+  private final UserTagPreferenceRepository userTagPreferenceRepository;
   private final UserRepository userRepository;
   private final VideoRepository videoRepository;
+  private final VideoScoreDirtyRepository videoScoreDirtyRepository;
 
   @Transactional
   public VideoInteractionDTO recordView(long userId, long videoId, RecordVideoViewRequest request) {
@@ -51,7 +58,7 @@ public class VideoInteractionService {
 
   private VideoInteractionDTO recordViewInternal(long userId, long videoId, Integer rawWatchTime) {
     VideoEntity video = requireVideo(videoId);
-    int watchTime = normalizeWatchTime(rawWatchTime);
+    int watchTime = normalizeWatchTime(rawWatchTime, video.getDuration());
     BigDecimal completionRate = calculateCompletionRate(watchTime, video.getDuration());
     VideoInteractionType interactionType =
         isSkip(watchTime, completionRate, video.getDuration())
@@ -68,19 +75,11 @@ public class VideoInteractionService {
       video.setViewCount((video.getViewCount() == null ? 0 : video.getViewCount()) + 1);
       videoRepository.save(video);
     }
+    videoScoreDirtyRepository.markDirty(videoId);
+    userTagPreferenceRepository.incrementPreferencesForVideo(
+        userId, videoId, tagScoreForView(interactionType, rewatch));
 
     return toDto(saved);
-  }
-
-  @Transactional
-  public VideoInteractionDTO recordAction(
-      long userId, long videoId, VideoInteractionType interactionType) {
-    if (interactionType == VideoInteractionType.VIEW || interactionType == VideoInteractionType.SKIP) {
-      throw new IllegalArgumentException("VIEW/SKIP cần gửi watchTime.");
-    }
-
-    VideoEntity video = requireVideo(videoId);
-    return toDto(save(userId, video, interactionType, 0, BigDecimal.ZERO, false));
   }
 
   private VideoInteraction save(
@@ -115,8 +114,12 @@ public class VideoInteractionService {
     }
   }
 
-  private static int normalizeWatchTime(Integer watchTime) {
-    return watchTime != null ? Math.max(watchTime, 0) : 0;
+  private static int normalizeWatchTime(Integer watchTime, Integer duration) {
+    int normalizedWatchTime = watchTime != null ? Math.max(watchTime, 0) : 0;
+    if (duration == null || duration <= 0) {
+      return normalizedWatchTime;
+    }
+    return Math.min(normalizedWatchTime, duration);
   }
 
   private static BigDecimal calculateCompletionRate(int watchTime, Integer duration) {
@@ -138,6 +141,13 @@ public class VideoInteractionService {
             && completionRate.compareTo(SKIP_COMPLETION_RATE) < 0);
   }
 
+  private static BigDecimal tagScoreForView(VideoInteractionType interactionType, boolean rewatch) {
+    if (interactionType == VideoInteractionType.SKIP) {
+      return SKIP_TAG_SCORE;
+    }
+    return rewatch ? REWATCH_TAG_SCORE : VIEW_TAG_SCORE;
+  }
+
   private static VideoInteractionDTO toDto(VideoInteraction interaction) {
     UserEntity user = interaction.getUser();
     VideoEntity video = interaction.getVideo();
@@ -151,6 +161,7 @@ public class VideoInteractionService {
         .completionRate(interaction.getCompletionRate())
         .isRewatch(interaction.getIsRewatch())
         .createdAt(interaction.getCreatedAt())
+        .lastWatchedAt(interaction.getLastWatchedAt())
         .build();
   }
 }

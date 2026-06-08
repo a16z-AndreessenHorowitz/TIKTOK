@@ -28,7 +28,8 @@ import lombok.Setter;
       @Index(
           name = "idx_video_interactions_user_video_type",
           columnList = "user_id,video_id,interaction_type"),
-      @Index(name = "idx_video_interactions_video_created", columnList = "video_id,created_at")
+      @Index(name = "idx_video_interactions_video_created", columnList = "video_id,created_at"),
+      @Index(name = "idx_video_interactions_user_last_watched", columnList = "user_id,last_watched_at")
     })
 @Getter
 @Setter
@@ -37,10 +38,7 @@ public class VideoInteraction {
 
   public enum VideoInteractionType {
     VIEW,
-    SKIP,
-    LIKE,
-    COMMENT,
-    SHARE
+    SKIP
   }
 
   @Id
@@ -66,7 +64,7 @@ public class VideoInteraction {
       name = "interaction_type",
       nullable = false,
       length = 20,
-      columnDefinition = "ENUM('VIEW','SKIP','LIKE','COMMENT','SHARE')")
+      columnDefinition = "ENUM('VIEW','SKIP')")
   private VideoInteractionType interactionType;
 
   @Column(name = "watch_time", columnDefinition = "INT DEFAULT 0")
@@ -89,8 +87,14 @@ public class VideoInteraction {
       columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
   private LocalDateTime createdAt;
 
+  @Column(name = "last_watched_at")
+  private LocalDateTime lastWatchedAt;
+
   @PrePersist
   void prePersist() {
+    if (createdAt == null) {
+      createdAt = LocalDateTime.now();
+    }
     if (watchTime == null) {
       watchTime = 0;
     }
@@ -100,8 +104,9 @@ public class VideoInteraction {
     if (isRewatch == null) {
       isRewatch = false;
     }
-    if (createdAt == null) {
-      createdAt = LocalDateTime.now();
+    if ((interactionType == VideoInteractionType.VIEW || interactionType == VideoInteractionType.SKIP)
+        && lastWatchedAt == null) {
+      lastWatchedAt = createdAt;
     }
   }
 }

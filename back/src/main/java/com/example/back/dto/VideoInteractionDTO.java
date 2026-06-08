@@ -20,4 +20,5 @@ public class VideoInteractionDTO {
   private BigDecimal completionRate;
   private Boolean isRewatch;
   private LocalDateTime createdAt;
+  private LocalDateTime lastWatchedAt;
 }
