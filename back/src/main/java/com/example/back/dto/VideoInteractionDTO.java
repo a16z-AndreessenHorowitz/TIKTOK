@@ -16,7 +16,7 @@ public class VideoInteractionDTO {
   private Long userId;
   private Long videoId;
   private VideoInteractionType interactionType;
-  private Integer watchTime;
+  private BigDecimal watchTime;
   private BigDecimal completionRate;
   private Boolean isRewatch;
   private LocalDateTime createdAt;

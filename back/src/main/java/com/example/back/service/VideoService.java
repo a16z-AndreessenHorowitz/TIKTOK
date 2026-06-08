@@ -74,7 +74,7 @@ public class VideoService {
     int randomLimit = pageSize - trendingPage.size();
     List<VideoEntity> randomPage =
         videoRepository.findRandomFeedPage(
-            viewerUserId, excludedVideoIds, randomLimit + 1);
+            null, excludedVideoIds, randomLimit + 1);
     boolean hasMoreRandom = randomPage.size() > randomLimit;
     if (hasMoreRandom) {
       randomPage = randomPage.subList(0, randomLimit);

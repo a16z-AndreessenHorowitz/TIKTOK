@@ -117,46 +117,6 @@ function saveFeedAudio(feedAudio) {
   sessionStorage.setItem(FEED_AUDIO_KEY, JSON.stringify(feedAudio));
 }
 
-function clampWatchTime(watchedSeconds, duration) {
-  const normalizedWatchTime = Number.isFinite(watchedSeconds) ? Math.max(watchedSeconds, 0) : 0;
-  if (!Number.isFinite(duration) || duration <= 0) {
-    return normalizedWatchTime;
-  }
-  return Math.min(normalizedWatchTime, duration);
-}
-
-function readPositiveNumber(value) {
-  const number = Number(value);
-  return Number.isFinite(number) && number > 0 ? number : null;
-}
-
-function readWatchDuration(video, feedItem) {
-  return (
-    readPositiveNumber(feedItem?.duration)
-    ?? readPositiveNumber(feedItem?.video?.duration)
-    ?? readPositiveNumber(video?.duration)
-    ?? null
-  );
-}
-
-function readNowMs() {
-  return typeof performance !== "undefined" && typeof performance.now === "function"
-    ? performance.now()
-    : Date.now();
-}
-
-function addWatchedPlayingTime(session, duration) {
-  const playingStartedAt = Number(session.playingStartedAt);
-  if (!Number.isFinite(playingStartedAt)) {
-    return;
-  }
-
-  const elapsedSeconds = (readNowMs() - playingStartedAt) / 1000;
-  if (elapsedSeconds > 0) {
-    session.watchedSeconds = clampWatchTime((session.watchedSeconds || 0) + elapsedSeconds, duration);
-  }
-  session.playingStartedAt = readNowMs();
-}
 
 function VideoCaption({ caption, expanded, onExpand, onCollapse }) {
   const textRef = useRef(null);
@@ -238,6 +198,8 @@ export default function Home() {
   const feedAudioRef = useRef(feedAudio);
   const activeIndexRef = useRef(activeIndex);
   const interactionSessionRef = useRef(null);
+  /** currentTime của video ở lần timeupdate trước — để tính delta chính xác */
+  const lastVideoTimeRef = useRef(0);
   const isLoggedInRef = useRef(isLoggedIn);
   const videosRef = useRef(videos);
   const nextCursorRef = useRef(null);
@@ -429,20 +391,15 @@ export default function Home() {
     const session = interactionSessionRef.current;
     if (!session?.videoId) return;
 
-    const activeVideoIndex = videosRef.current.findIndex(
-      (video) => String(video?.id) === String(session.videoId),
-    );
-    const activeVideo = activeVideoIndex >= 0 ? videoRefs.current[activeVideoIndex] : null;
-    const activeFeedItem = activeVideoIndex >= 0 ? videosRef.current[activeVideoIndex] : null;
-    const duration = readWatchDuration(activeVideo, activeFeedItem);
-    addWatchedPlayingTime(session, duration);
+    // Lấy tổng giây đã tích lũy qua timeupdate (chính xác hơn Date.now)
+    const watchTime = session.watchedSeconds ?? 0;
 
     interactionSessionRef.current = null;
+    lastVideoTimeRef.current = 0;
 
     if (!isLoggedInRef.current) return;
 
-    const watchTime = Math.max(0, Math.round(session.watchedSeconds || 0));
-    if (watchTime <= 0) return;
+    if (watchTime < 1.0) return; // Bỏ qua scroll quá nhanh (< 1 giây)
 
     recordVideoView(session.videoId, watchTime, options).catch((err) => {
       if (err?.status !== 401 && err?.status !== 403) {
@@ -456,6 +413,7 @@ export default function Home() {
     const videoId = video?.id;
     if (videoId == null) {
       interactionSessionRef.current = null;
+      lastVideoTimeRef.current = 0;
       return;
     }
 
@@ -465,29 +423,16 @@ export default function Home() {
     }
 
     flushVideoInteraction();
-    const videoEl = videoRefs.current[index];
     interactionSessionRef.current = {
       videoId,
       watchedSeconds: 0,
-      playingStartedAt: videoEl && !videoEl.paused && !videoEl.ended ? readNowMs() : null,
     };
+    // Khởi tạo lastVideoTime bằng currentTime của video element (nếu có)
+    const videoEl = videoRefs.current[index];
+    lastVideoTimeRef.current = videoEl?.currentTime ?? 0;
   }, [flushVideoInteraction]);
 
-  const syncVideoWatchTime = useCallback((video, index, { isPlaying = false } = {}) => {
-    const session = interactionSessionRef.current;
-    const videoId = videosRef.current[index]?.id;
-    if (!session || videoId == null || String(session.videoId) !== String(videoId)) {
-      return;
-    }
 
-    const duration = readWatchDuration(video, videosRef.current[index]);
-    addWatchedPlayingTime(session, duration);
-    if (isPlaying && video && !video.paused && !video.ended) {
-      session.playingStartedAt = readNowMs();
-    } else {
-      session.playingStartedAt = null;
-    }
-  }, []);
 
   const handleVideoShare = useCallback(
     async (videoId) => {
@@ -730,20 +675,26 @@ export default function Home() {
       flushVideoInteraction({ keepalive: true });
     };
 
-    const flushWhenHidden = () => {
+    const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
-        flushBeforeLeaving();
+        // KHÔNG flush session — chỉ pause video để timeupdate ngừng fire
+        // Session vẫn còn nguyên, watchedSeconds được giữ lại
+        const activeVideo = videoRefs.current[activeIndexRef.current];
+        if (activeVideo && !activeVideo.paused) activeVideo.pause();
+      } else if (document.visibilityState === "visible") {
+        // Resume lại video, tiếp tục cộng dồn vào session cũ (không tạo session mới)
+        playActiveVideo(activeIndexRef.current);
       }
     };
 
     window.addEventListener("pagehide", flushBeforeLeaving);
-    document.addEventListener("visibilitychange", flushWhenHidden);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
       window.removeEventListener("pagehide", flushBeforeLeaving);
-      document.removeEventListener("visibilitychange", flushWhenHidden);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       flushBeforeLeaving();
     };
-  }, [flushVideoInteraction]);
+  }, [flushVideoInteraction, playActiveVideo]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -821,15 +772,6 @@ export default function Home() {
 
             playVideo(video, index);
           } else {
-            const session = interactionSessionRef.current;
-            const videoId = videosRef.current[index]?.id;
-            if (
-              session?.videoId != null
-              && videoId != null
-              && String(session.videoId) === String(videoId)
-            ) {
-              flushVideoInteraction();
-            }
             video.muted = true;
             video.pause();
             video.currentTime = 0;
@@ -1027,11 +969,22 @@ export default function Home() {
                             e.currentTarget.muted = true;
                           }
                         }}
-                        onPlaying={(e) =>
-                          syncVideoWatchTime(e.currentTarget, index, { isPlaying: true })
-                        }
-                        onPause={(e) => syncVideoWatchTime(e.currentTarget, index)}
-                        onWaiting={(e) => syncVideoWatchTime(e.currentTarget, index)}
+                        onTimeUpdate={(e) => {
+                          // Chỉ tính cho video đang active
+                          if (index !== activeIndexRef.current) return;
+                          const session = interactionSessionRef.current;
+                          if (!session) return;
+
+                          const currentTime = e.currentTarget.currentTime;
+                          const diff = currentTime - lastVideoTimeRef.current;
+
+                          // Loại trừ: seek/tua nhanh (diff >= 1s) hoặc lặp lại (diff < 0)
+                          if (diff > 0 && diff < 1) {
+                            session.watchedSeconds = (session.watchedSeconds ?? 0) + diff;
+                          }
+                          lastVideoTimeRef.current = currentTime;
+                        }}
+                        onEnded={() => flushVideoInteraction()}
                         onError={() => handleVideoError(rowKey)}
                         className="video-player"
                       />

@@ -1,11 +1,13 @@
 package com.example.back.dto;
 
-import jakarta.validation.constraints.Min;
+import java.math.BigDecimal;
+
+import jakarta.validation.constraints.DecimalMin;
 import lombok.Data;
 
 @Data
 public class RecordVideoViewRequest {
 
-  @Min(value = 0, message = "watchTime không được âm")
-  private Integer watchTime;
+  @DecimalMin(value = "0", message = "watchTime không được âm")
+  private BigDecimal watchTime;
 }

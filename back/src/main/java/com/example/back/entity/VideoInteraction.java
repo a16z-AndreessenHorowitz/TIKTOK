@@ -67,8 +67,12 @@ public class VideoInteraction {
       columnDefinition = "ENUM('VIEW','SKIP')")
   private VideoInteractionType interactionType;
 
-  @Column(name = "watch_time", columnDefinition = "INT DEFAULT 0")
-  private Integer watchTime;
+  @Column(
+      name = "watch_time",
+      precision = 8,
+      scale = 2,
+      columnDefinition = "DECIMAL(8,2) DEFAULT 0")
+  private BigDecimal watchTime;
 
   @Column(
       name = "completion_rate",
@@ -96,7 +100,7 @@ public class VideoInteraction {
       createdAt = LocalDateTime.now();
     }
     if (watchTime == null) {
-      watchTime = 0;
+      watchTime = BigDecimal.ZERO;
     }
     if (completionRate == null) {
       completionRate = BigDecimal.ZERO;

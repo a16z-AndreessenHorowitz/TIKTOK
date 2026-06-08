@@ -56,9 +56,9 @@ public class VideoInteractionService {
         .toList();
   }
 
-  private VideoInteractionDTO recordViewInternal(long userId, long videoId, Integer rawWatchTime) {
+  private VideoInteractionDTO recordViewInternal(long userId, long videoId, BigDecimal rawWatchTime) {
     VideoEntity video = requireVideo(videoId);
-    int watchTime = normalizeWatchTime(rawWatchTime, video.getDuration());
+    BigDecimal watchTime = normalizeWatchTime(rawWatchTime, video.getDuration());
     BigDecimal completionRate = calculateCompletionRate(watchTime, video.getDuration());
     VideoInteractionType interactionType =
         isSkip(watchTime, completionRate, video.getDuration())
@@ -86,7 +86,7 @@ public class VideoInteractionService {
       long userId,
       VideoEntity video,
       VideoInteractionType interactionType,
-      int watchTime,
+      BigDecimal watchTime,
       BigDecimal completionRate,
       boolean rewatch) {
     requireUser(userId);
@@ -114,28 +114,35 @@ public class VideoInteractionService {
     }
   }
 
-  private static int normalizeWatchTime(Integer watchTime, Integer duration) {
-    int normalizedWatchTime = watchTime != null ? Math.max(watchTime, 0) : 0;
+  private static BigDecimal normalizeWatchTime(BigDecimal watchTime, Integer duration) {
+    BigDecimal normalizedWatchTime =
+        watchTime != null ? watchTime.max(BigDecimal.ZERO) : BigDecimal.ZERO;
     if (duration == null || duration <= 0) {
-      return normalizedWatchTime;
+      return normalizedWatchTime.setScale(2, RoundingMode.HALF_UP);
     }
-    return Math.min(normalizedWatchTime, duration);
+    return normalizedWatchTime
+        .min(BigDecimal.valueOf(duration))
+        .setScale(2, RoundingMode.HALF_UP);
   }
 
-  private static BigDecimal calculateCompletionRate(int watchTime, Integer duration) {
-    if (duration == null || duration <= 0 || watchTime <= 0) {
+  private static BigDecimal calculateCompletionRate(BigDecimal watchTime, Integer duration) {
+    if (duration == null || duration <= 0 || watchTime.compareTo(BigDecimal.ZERO) <= 0) {
       return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
     }
 
     BigDecimal rate =
-        BigDecimal.valueOf(watchTime)
-            .divide(BigDecimal.valueOf(duration), 4, RoundingMode.HALF_UP)
+        watchTime.divide(BigDecimal.valueOf(duration), 4, RoundingMode.HALF_UP)
             .min(BigDecimal.ONE);
     return rate.setScale(2, RoundingMode.HALF_UP);
   }
 
-  private static boolean isSkip(int watchTime, BigDecimal completionRate, Integer duration) {
-    return watchTime < SKIP_WATCH_TIME_SECONDS
+  private static final int MIN_VIEW_TIME_SECONDS = 7;
+
+  private static boolean isSkip(BigDecimal watchTime, BigDecimal completionRate, Integer duration) {
+    if (watchTime.compareTo(BigDecimal.valueOf(MIN_VIEW_TIME_SECONDS)) >= 0) {
+      return false;
+    }
+    return watchTime.compareTo(BigDecimal.valueOf(SKIP_WATCH_TIME_SECONDS)) < 0
         || (duration != null
             && duration > 0
             && completionRate.compareTo(SKIP_COMPLETION_RATE) < 0);
