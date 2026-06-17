@@ -13,8 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.back.dto.ApiResponse;
 import com.example.back.dto.UserProfileDTO;
-import com.example.back.exception.InvalidTokenException;
-import com.example.back.security.JwtTokenService;
+import com.example.back.security.JwtAuthorizationService;
 import com.example.back.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
 
@@ -24,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 public class UserProfileController {
 
   private final UserProfileService userProfileService;
-  private final JwtTokenService jwtTokenService;
+  private final JwtAuthorizationService jwtAuthorizationService;
 
   @GetMapping("/{username}/profile")
   public ApiResponse<UserProfileDTO> getProfile(
@@ -32,7 +31,10 @@ public class UserProfileController {
       @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
       @RequestParam(value = "limit", required = false) Integer limit) {
     return ApiResponse.of(
-        200, "Success", userProfileService.getProfile(username, readOptionalUserId(authorization), limit));
+        200,
+        "Success",
+        userProfileService.getProfile(
+            username, jwtAuthorizationService.readOptionalUserId(authorization), limit));
   }
 
   @PatchMapping(value = "/me/profile", consumes = "multipart/form-data")
@@ -45,25 +47,11 @@ public class UserProfileController {
     return ApiResponse.of(
         200,
         "Success",
-        userProfileService.updateProfile(requireUserId(authorization), username, displayName, bio, avatar));
-  }
-
-  private Long readOptionalUserId(String authorization) {
-    if (authorization == null || authorization.isBlank() || !authorization.startsWith("Bearer ")) {
-      return null;
-    }
-    String token = authorization.substring("Bearer ".length()).trim();
-    return token.isBlank() ? null : jwtTokenService.parseAccessToken(token).userId();
-  }
-
-  private long requireUserId(String authorization) {
-    if (authorization == null || !authorization.startsWith("Bearer ")) {
-      throw new InvalidTokenException();
-    }
-    String token = authorization.substring("Bearer ".length()).trim();
-    if (token.isEmpty()) {
-      throw new InvalidTokenException();
-    }
-    return jwtTokenService.parseAccessToken(token).userId();
+        userProfileService.updateProfile(
+            jwtAuthorizationService.requireUser(authorization).userId(),
+            username,
+            displayName,
+            bio,
+            avatar));
   }
 }

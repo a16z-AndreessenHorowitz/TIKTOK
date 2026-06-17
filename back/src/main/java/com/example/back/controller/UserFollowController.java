@@ -11,8 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.back.dto.ApiResponse;
 import com.example.back.dto.FollowStatusDTO;
-import com.example.back.exception.InvalidTokenException;
-import com.example.back.security.JwtTokenService;
+import com.example.back.security.JwtAuthorizationService;
 import com.example.back.service.FollowService;
 
 import lombok.RequiredArgsConstructor;
@@ -23,13 +22,13 @@ import lombok.RequiredArgsConstructor;
 public class UserFollowController {
 
   private final FollowService followService;
-  private final JwtTokenService jwtTokenService;
+  private final JwtAuthorizationService jwtAuthorizationService;
 
   @GetMapping("/{userId}/follow")
   public ApiResponse<FollowStatusDTO> getFollowStatus(
       @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
       @PathVariable long userId) {
-    long followerId = requireUserId(authorization);
+    long followerId = jwtAuthorizationService.requireUser(authorization).userId();
     return ApiResponse.of(200, "Success", followService.getFollowStatus(followerId, userId));
   }
 
@@ -37,7 +36,7 @@ public class UserFollowController {
   public ApiResponse<FollowStatusDTO> follow(
       @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
       @PathVariable long userId) {
-    long followerId = requireUserId(authorization);
+    long followerId = jwtAuthorizationService.requireUser(authorization).userId();
     return ApiResponse.of(200, "Followed", followService.follow(followerId, userId));
   }
 
@@ -45,18 +44,7 @@ public class UserFollowController {
   public ApiResponse<FollowStatusDTO> unfollow(
       @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
       @PathVariable long userId) {
-    long followerId = requireUserId(authorization);
+    long followerId = jwtAuthorizationService.requireUser(authorization).userId();
     return ApiResponse.of(200, "Unfollowed", followService.unfollow(followerId, userId));
-  }
-
-  private long requireUserId(String authorization) {
-    if (authorization == null || !authorization.startsWith("Bearer ")) {
-      throw new InvalidTokenException();
-    }
-    String token = authorization.substring("Bearer ".length()).trim();
-    if (token.isEmpty()) {
-      throw new InvalidTokenException();
-    }
-    return jwtTokenService.parseAccessToken(token).userId();
   }
 }

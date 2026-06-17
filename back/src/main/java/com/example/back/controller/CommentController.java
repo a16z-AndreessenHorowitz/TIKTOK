@@ -18,8 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.back.dto.ApiResponse;
 import com.example.back.dto.CreateVideoCommentRequest;
 import com.example.back.dto.VideoCommentDTO;
-import com.example.back.exception.InvalidTokenException;
-import com.example.back.security.JwtTokenService;
+import com.example.back.security.JwtAuthorizationService;
 import com.example.back.service.CommentService;
 
 import jakarta.validation.Valid;
@@ -32,7 +31,7 @@ import lombok.RequiredArgsConstructor;
 public class CommentController {
 
   private final CommentService commentService;
-  private final JwtTokenService jwtTokenService;
+  private final JwtAuthorizationService jwtAuthorizationService;
 
   @GetMapping
   public ApiResponse<List<VideoCommentDTO>> getVideoComments(
@@ -49,18 +48,7 @@ public class CommentController {
       @PathVariable long videoId,
       @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
       @Valid @RequestBody CreateVideoCommentRequest body) {
-    long userId = requireUserId(authorization);
+    long userId = jwtAuthorizationService.requireUser(authorization).userId();
     return ApiResponse.of(201, "Created", commentService.createComment(videoId, userId, body));
-  }
-
-  private long requireUserId(String authorization) {
-    if (authorization == null || !authorization.startsWith("Bearer ")) {
-      throw new InvalidTokenException();
-    }
-    String token = authorization.substring("Bearer ".length()).trim();
-    if (token.isEmpty()) {
-      throw new InvalidTokenException();
-    }
-    return jwtTokenService.parseAccessToken(token).userId();
   }
 }

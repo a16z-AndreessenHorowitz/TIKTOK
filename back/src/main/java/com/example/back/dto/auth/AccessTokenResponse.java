@@ -12,6 +12,7 @@ public record AccessTokenResponse(String accessToken, String tokenType, long exp
     userMap.put("username", user.username());
     userMap.put("email", user.email());
     userMap.put("avatarUrl", user.avatarUrl());
+    userMap.put("role", user.role().name());
     Map<String, Object> m = new LinkedHashMap<>();
     m.put("accessToken", accessToken);
     m.put("tokenType", tokenType);

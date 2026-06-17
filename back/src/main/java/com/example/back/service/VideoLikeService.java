@@ -8,7 +8,6 @@ import com.example.back.entity.VideoEntity;
 import com.example.back.repository.LikeRepository;
 import com.example.back.repository.UserRepository;
 import com.example.back.repository.VideoRepository;
-import com.example.back.repository.VideoScoreDirtyRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,7 +18,6 @@ public class VideoLikeService {
   private final LikeRepository likeRepository;
   private final UserRepository userRepository;
   private final VideoRepository videoRepository;
-  private final VideoScoreDirtyRepository videoScoreDirtyRepository;
 
   @Transactional(readOnly = true)
   public VideoLikeStatusDTO getLikeStatus(long userId, long videoId) {
@@ -36,9 +34,6 @@ public class VideoLikeService {
     int inserted = likeRepository.insertIgnore(userId, videoId);
     long likeCount =
         inserted > 0 ? videoRepository.incrementLikeCount(videoId) : videoRepository.getLikeCount(videoId);
-    if (inserted > 0) {
-      videoScoreDirtyRepository.markDirty(videoId);
-    }
 
     return VideoLikeStatusDTO.builder()
         .videoId(videoId)
@@ -53,9 +48,6 @@ public class VideoLikeService {
     int deleted = likeRepository.deleteByUserIdAndVideoId(userId, videoId);
     long likeCount =
         deleted > 0 ? videoRepository.decrementLikeCount(videoId) : videoRepository.getLikeCount(videoId);
-    if (deleted > 0) {
-      videoScoreDirtyRepository.markDirty(videoId);
-    }
 
     return VideoLikeStatusDTO.builder()
         .videoId(videoId)

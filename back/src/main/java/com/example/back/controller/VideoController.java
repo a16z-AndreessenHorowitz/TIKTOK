@@ -15,8 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.back.dto.ApiResponse;
 import com.example.back.dto.VideoFeedResponseDTO;
 import com.example.back.dto.VideosResponseDTO;
-import com.example.back.exception.InvalidTokenException;
-import com.example.back.security.JwtTokenService;
+import com.example.back.security.JwtAuthorizationService;
 import com.example.back.service.VideoService;
 
 import lombok.RequiredArgsConstructor;
@@ -27,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class VideoController {
 
   private final VideoService videoService;
-  private final JwtTokenService jwtTokenService;
+  private final JwtAuthorizationService jwtAuthorizationService;
 
   @GetMapping("/feed")
   public ApiResponse<VideoFeedResponseDTO> getVideoFeed(
@@ -38,7 +37,8 @@ public class VideoController {
     return ApiResponse.of(
         200,
         "Success",
-        videoService.getFeed(cursor, limit, readOptionalUserId(authorization), excludeIds));
+        videoService.getFeed(
+            cursor, limit, jwtAuthorizationService.readOptionalUserId(authorization), excludeIds));
   }
 
   @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -47,25 +47,7 @@ public class VideoController {
       @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
       @RequestParam("file") MultipartFile file,
       @RequestParam(value = "caption", required = false) String caption) {
-    long userId = requireUserId(authorization);
+    long userId = jwtAuthorizationService.requireUser(authorization).userId();
     return ApiResponse.of(201, "Uploaded", videoService.uploadVideo(userId, file, caption));
-  }
-
-  private long requireUserId(String authorization) {
-    if (authorization == null || !authorization.startsWith("Bearer ")) {
-      throw new InvalidTokenException();
-    }
-    String token = authorization.substring("Bearer ".length()).trim();
-    if (token.isEmpty()) {
-      throw new InvalidTokenException();
-    }
-    return jwtTokenService.parseAccessToken(token).userId();
-  }
-
-  private Long readOptionalUserId(String authorization) {
-    if (authorization == null || authorization.isBlank()) {
-      return null;
-    }
-    return requireUserId(authorization);
   }
 }

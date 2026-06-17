@@ -47,6 +47,12 @@ public class GlobalExceptionHandler {
     return ApiResponse.of(401, ex.getMessage(), null);
   }
 
+  @ExceptionHandler(ForbiddenException.class)
+  @ResponseStatus(HttpStatus.FORBIDDEN)
+  public ApiResponse<Object> handleForbidden(ForbiddenException ex) {
+    return ApiResponse.of(403, ex.getMessage(), null);
+  }
+
   @ExceptionHandler(IllegalArgumentException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public ApiResponse<Object> handleBadRequest(IllegalArgumentException ex) {

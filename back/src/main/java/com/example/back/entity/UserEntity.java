@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -27,6 +29,11 @@ import lombok.Setter;
 @NoArgsConstructor
 public class UserEntity {
 
+  public enum UserRole {
+    USER,
+    ADMIN
+  }
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -46,6 +53,10 @@ public class UserEntity {
 
   @Column(name = "password_hash", nullable = false, length = 255)
   private String passwordHash;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "role", nullable = false, columnDefinition = "ENUM('USER','ADMIN') DEFAULT 'USER'")
+  private UserRole role = UserRole.USER;
 
   @Column(name = "avatar_url", length = 512)
   private String avatarUrl;
@@ -75,6 +86,9 @@ public class UserEntity {
     }
     if (followingCount == null) {
       followingCount = 0L;
+    }
+    if (role == null) {
+      role = UserRole.USER;
     }
     if (displayName == null || displayName.isBlank()) {
       displayName = username;

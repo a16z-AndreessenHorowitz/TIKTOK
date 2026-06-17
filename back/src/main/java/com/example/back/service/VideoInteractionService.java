@@ -14,11 +14,9 @@ import com.example.back.entity.UserEntity;
 import com.example.back.entity.VideoEntity;
 import com.example.back.entity.VideoInteraction;
 import com.example.back.entity.VideoInteraction.VideoInteractionType;
-import com.example.back.repository.UserTagPreferenceRepository;
 import com.example.back.repository.UserRepository;
 import com.example.back.repository.VideoInteractionRepository;
 import com.example.back.repository.VideoRepository;
-import com.example.back.repository.VideoScoreDirtyRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,15 +26,10 @@ public class VideoInteractionService {
 
   private static final int SKIP_WATCH_TIME_SECONDS = 2;
   private static final BigDecimal SKIP_COMPLETION_RATE = new BigDecimal("0.15");
-  private static final BigDecimal SKIP_TAG_SCORE = new BigDecimal("0.10");
-  private static final BigDecimal VIEW_TAG_SCORE = new BigDecimal("1.00");
-  private static final BigDecimal REWATCH_TAG_SCORE = new BigDecimal("2.00");
 
   private final VideoInteractionRepository videoInteractionRepository;
-  private final UserTagPreferenceRepository userTagPreferenceRepository;
   private final UserRepository userRepository;
   private final VideoRepository videoRepository;
-  private final VideoScoreDirtyRepository videoScoreDirtyRepository;
 
   @Transactional
   public VideoInteractionDTO recordView(long userId, long videoId, RecordVideoViewRequest request) {
@@ -75,9 +68,6 @@ public class VideoInteractionService {
       video.setViewCount((video.getViewCount() == null ? 0 : video.getViewCount()) + 1);
       videoRepository.save(video);
     }
-    videoScoreDirtyRepository.markDirty(videoId);
-    userTagPreferenceRepository.incrementPreferencesForVideo(
-        userId, videoId, tagScoreForView(interactionType, rewatch));
 
     return toDto(saved);
   }
@@ -146,13 +136,6 @@ public class VideoInteractionService {
         || (duration != null
             && duration > 0
             && completionRate.compareTo(SKIP_COMPLETION_RATE) < 0);
-  }
-
-  private static BigDecimal tagScoreForView(VideoInteractionType interactionType, boolean rewatch) {
-    if (interactionType == VideoInteractionType.SKIP) {
-      return SKIP_TAG_SCORE;
-    }
-    return rewatch ? REWATCH_TAG_SCORE : VIEW_TAG_SCORE;
   }
 
   private static VideoInteractionDTO toDto(VideoInteraction interaction) {

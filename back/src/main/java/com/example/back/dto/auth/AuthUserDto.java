@@ -1,3 +1,6 @@
 package com.example.back.dto.auth;
 
-public record AuthUserDto(long id, String username, String email, String avatarUrl) {}
+import com.example.back.entity.UserEntity.UserRole;
+
+public record AuthUserDto(
+    long id, String username, String email, String avatarUrl, UserRole role) {}

@@ -1,6 +1,5 @@
 package com.example.back.repository;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,71 +96,17 @@ public class VideoRepository {
     return getLongColumn(videoId, "comment_count");
   }
 
-  public void refreshRecommendationScore(long videoId) {
-    entityManager
-        .createNativeQuery(recommendationScoreUpdateSql("WHERE v.id = ?"))
-        .setParameter(1, videoId)
-        .executeUpdate();
-  }
-
-  private static String recommendationScoreUpdateSql(String whereClause) {
-    return """
-        UPDATE videos v
-        SET recommendation_score = GREATEST(
-            (
-              COALESCE(v.like_count, 0) * 3
-              + COALESCE(v.comment_count, 0) * 5
-              + (
-                  SELECT COUNT(*)
-                  FROM shares s
-                  WHERE s.video_id = v.id
-                ) * 8
-              + COALESCE(v.save_count, 0) * 4
-              + COALESCE((
-                  SELECT AVG(vi.completion_rate)
-                  FROM video_interactions vi
-                  WHERE vi.video_id = v.id
-                    AND vi.interaction_type IN ('VIEW', 'SKIP')
-                ), 0) * 100
-              + (
-                  SELECT COUNT(*)
-                  FROM video_interactions ri
-                  WHERE ri.video_id = v.id
-                    AND ri.is_rewatch = TRUE
-                ) * 20
-              + LOG(COALESCE(v.view_count, 0) + 1) * 10
-              - (TIMESTAMPDIFF(HOUR, v.created_at, CURRENT_TIMESTAMP) / 24) * 5
-            ),
-            0
-          )
-        """
-        + whereClause;
-  }
-
   public List<VideoEntity> findFeedPage(
       Long viewerUserId,
       List<Long> excludedVideoIds,
-      BigDecimal cursorRecommendationScore,
       LocalDateTime cursorCreatedAt,
       Long cursorId,
       int limit) {
-    String scoreExpression =
-        """
-        (
-          COALESCE(v.recommendation_score, 0)
-          + COALESCE((
-              SELECT SUM(utp.score)
-              FROM user_tag_preferences utp
-              JOIN video_hashtags vh ON vh.tag_id = utp.tag_id
-              WHERE vh.video_id = v.id
-                AND utp.user_id = :viewerUserId
-            ), 0)
-        )
-        """;
     List<String> predicates = new ArrayList<>();
     if (excludedVideoIds != null && !excludedVideoIds.isEmpty()) {
       predicates.add("v.id NOT IN (:excludedVideoIds)");
     }
+    
     if (viewerUserId != null) {
       predicates.add(
           """
@@ -173,24 +118,15 @@ public class VideoRepository {
           )
           """);
     }
-    if (cursorRecommendationScore != null && cursorCreatedAt != null && cursorId != null) {
+  
+    if (cursorCreatedAt != null && cursorId != null) {
       predicates.add(
-          "("
-              + scoreExpression
-              + """
-              < :cursorRecommendationScore
-              OR (
-                """
-              + scoreExpression
-              + """
-                = :cursorRecommendationScore
-                AND (
-                  v.created_at < :cursorCreatedAt
-                  OR (v.created_at = :cursorCreatedAt AND v.id < :cursorId)
-                )
-              )
-            )
-            """);
+          """
+          (
+            v.created_at < :cursorCreatedAt
+            OR (v.created_at = :cursorCreatedAt AND v.id < :cursorId)
+          )
+          """);
     }
 
     String whereClause =
@@ -204,48 +140,22 @@ public class VideoRepository {
             """
                 + whereClause
                 + """
-            ORDER BY
-            """
-                + scoreExpression
-                + """
-            DESC, v.created_at DESC, v.id DESC
+            ORDER BY v.created_at DESC, v.id DESC
             """,
             VideoEntity.class);
 
-    query.setParameter("viewerUserId", viewerUserId);
     if (excludedVideoIds != null && !excludedVideoIds.isEmpty()) {
       query.setParameter("excludedVideoIds", excludedVideoIds);
     }
-    if (cursorRecommendationScore != null && cursorCreatedAt != null && cursorId != null) {
-      query.setParameter("cursorRecommendationScore", cursorRecommendationScore);
+    if (viewerUserId != null) {
+      query.setParameter("viewerUserId", viewerUserId);
+    }
+    if (cursorCreatedAt != null && cursorId != null) {
       query.setParameter("cursorCreatedAt", cursorCreatedAt);
       query.setParameter("cursorId", cursorId);
     }
 
     return query.setMaxResults(limit).getResultList();
-  }
-
-  public BigDecimal calculateFeedScore(Long viewerUserId, long videoId) {
-    Object value =
-        entityManager
-            .createNativeQuery(
-                """
-                SELECT
-                  COALESCE(v.recommendation_score, 0)
-                  + COALESCE((
-                      SELECT SUM(utp.score)
-                      FROM user_tag_preferences utp
-                      JOIN video_hashtags vh ON vh.tag_id = utp.tag_id
-                      WHERE vh.video_id = v.id
-                        AND utp.user_id = ?
-                    ), 0)
-                FROM videos v
-                WHERE v.id = ?
-                """)
-            .setParameter(1, viewerUserId)
-            .setParameter(2, videoId)
-            .getSingleResult();
-    return value instanceof BigDecimal score ? score : new BigDecimal(String.valueOf(value));
   }
 
   public List<VideoEntity> findRandomFeedPage(

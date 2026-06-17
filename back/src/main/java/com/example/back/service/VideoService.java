@@ -1,6 +1,5 @@
 package com.example.back.service;
 
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -25,7 +24,6 @@ import com.example.back.repository.LikeRepository;
 import com.example.back.repository.SavedVideoRepository;
 import com.example.back.repository.UserRepository;
 import com.example.back.repository.VideoRepository;
-import com.example.back.repository.VideoScoreDirtyRepository;
 import com.example.back.service.LocalVideoStorageService.StoredVideo;
 
 import lombok.RequiredArgsConstructor;
@@ -36,14 +34,13 @@ public class VideoService {
 
   private static final int DEFAULT_FEED_LIMIT = 8;
   private static final int MAX_FEED_LIMIT = 20;
-  private static final double TRENDING_FEED_RATIO = 0.6;
+  private static final double LATEST_FEED_RATIO = 0.6;
 
   private final VideoRepository videoRepository;
   private final UserRepository userRepository;
   private final FollowRepository followRepository;
   private final LikeRepository likeRepository;
   private final SavedVideoRepository savedVideoRepository;
-  private final VideoScoreDirtyRepository videoScoreDirtyRepository;
   private final LocalVideoStorageService localVideoStorageService;
   private final VideoMetadataService videoMetadataService;
   private final HashtagService hashtagService;
@@ -52,26 +49,24 @@ public class VideoService {
   public VideoFeedResponseDTO getFeed(
       String cursor, Integer limit, Long viewerUserId, String rawExcludedVideoIds) {
     int pageSize = clampLimit(limit);
-    int trendingLimit = trendingLimit(pageSize);
+    int latestLimit = latestLimit(pageSize);
     FeedCursor feedCursor = parseCursor(cursor);
     List<Long> requestedExcludedVideoIds = parseExcludedVideoIds(rawExcludedVideoIds);
-    List<VideoEntity> trendingVideos =
+    List<VideoEntity> latestVideos =
         videoRepository.findFeedPage(
             viewerUserId,
             requestedExcludedVideoIds,
-            feedCursor.recommendationScore(),
             feedCursor.createdAt(),
             feedCursor.id(),
-            trendingLimit + 1);
-
-    boolean hasMoreTrending = trendingVideos.size() > trendingLimit;
-    List<VideoEntity> trendingPage =
-        hasMoreTrending ? trendingVideos.subList(0, trendingLimit) : trendingVideos;
+            latestLimit + 1);
+    boolean hasMoreLatest = latestVideos.size() > latestLimit;
+    List<VideoEntity> latestPage =
+        hasMoreLatest ? latestVideos.subList(0, latestLimit) : latestVideos;
     VideoEntity cursorVideo =
-        !trendingPage.isEmpty() ? trendingPage.get(trendingPage.size() - 1) : null;
+        !latestPage.isEmpty() ? latestPage.get(latestPage.size() - 1) : null;
     List<Long> excludedVideoIds =
-        mergeExcludedVideoIds(requestedExcludedVideoIds, trendingPage);
-    int randomLimit = pageSize - trendingPage.size();
+        mergeExcludedVideoIds(requestedExcludedVideoIds, latestPage);
+    int randomLimit = pageSize - latestPage.size();
     List<VideoEntity> randomPage =
         videoRepository.findRandomFeedPage(
             null, excludedVideoIds, randomLimit + 1);
@@ -79,12 +74,13 @@ public class VideoService {
     if (hasMoreRandom) {
       randomPage = randomPage.subList(0, randomLimit);
     }
+
     List<VideoEntity> page = new ArrayList<>(pageSize);
-    page.addAll(trendingPage);
+    page.addAll(latestPage);
     page.addAll(randomPage);
     String nextCursor =
         chooseNextCursor(
-            cursor, cursorVideo, page, viewerUserId, hasMoreTrending || hasMoreRandom);
+            cursor, cursorVideo, page, hasMoreLatest || hasMoreRandom);
     Collections.shuffle(page);
 
     Set<Long> followedAuthorIds = findFollowedAuthorIds(viewerUserId, page);
@@ -113,11 +109,9 @@ public class VideoService {
     video.setDuration(videoMetadataService.readDurationSeconds(storedVideo.path()));
     video.setPrivacy("public");
     video.setStatus("published");
-    video.setRecommendationScore(BigDecimal.ZERO);
 
     video = videoRepository.save(video);
     hashtagService.processHashtags(video.getId(), caption);
-    videoScoreDirtyRepository.markDirty(video.getId());
 
     return toDto(video);
   }
@@ -263,8 +257,8 @@ public class VideoService {
     return Math.max(1, Math.min(limit, MAX_FEED_LIMIT));
   }
 
-  private static int trendingLimit(int pageSize) {
-    return Math.max(1, Math.min(pageSize, (int) Math.round(pageSize * TRENDING_FEED_RATIO)));
+  private static int latestLimit(int pageSize) {
+    return Math.max(1, Math.min(pageSize, (int) Math.round(pageSize * LATEST_FEED_RATIO)));
   }
 
   private static List<Long> parseExcludedVideoIds(String rawExcludedVideoIds) {
@@ -315,29 +309,24 @@ public class VideoService {
           new String(Base64.getUrlDecoder().decode(cursor), StandardCharsets.UTF_8);
       String[] parts = decoded.split("\\|", 3);
       if (parts.length == 2) {
-        return new FeedCursor(null, LocalDateTime.parse(parts[0]), Long.parseLong(parts[1]));
+        return new FeedCursor(LocalDateTime.parse(parts[0]), Long.parseLong(parts[1]));
       }
       if (parts.length != 3) {
         throw new IllegalArgumentException("Cursor không hợp lệ.");
       }
       return new FeedCursor(
-          new BigDecimal(parts[0]), LocalDateTime.parse(parts[1]), Long.parseLong(parts[2]));
+          LocalDateTime.parse(parts[1]), Long.parseLong(parts[2]));
     } catch (RuntimeException ex) {
       throw new IllegalArgumentException("Cursor không hợp lệ.");
     }
   }
 
-  private String encodeCursor(VideoEntity video, Long viewerUserId) {
+  private String encodeCursor(VideoEntity video) {
     if (video.getCreatedAt() == null || video.getId() == null) {
       return null;
     }
 
-    BigDecimal recommendationScore =
-        viewerUserId != null
-            ? videoRepository.calculateFeedScore(viewerUserId, video.getId())
-            : video.getRecommendationScore() != null ? video.getRecommendationScore() : BigDecimal.ZERO;
-    String raw =
-        recommendationScore.toPlainString() + "|" + video.getCreatedAt() + "|" + video.getId();
+    String raw = video.getCreatedAt() + "|" + video.getId();
     return Base64.getUrlEncoder()
         .withoutPadding()
         .encodeToString(raw.getBytes(StandardCharsets.UTF_8));
@@ -347,13 +336,12 @@ public class VideoService {
       String currentCursor,
       VideoEntity cursorVideo,
       List<VideoEntity> page,
-      Long viewerUserId,
       boolean hasMoreCandidates) {
     if (!hasMoreCandidates) {
       return null;
     }
     if (cursorVideo != null) {
-      return encodeCursor(cursorVideo, viewerUserId);
+      return encodeCursor(cursorVideo);
     }
     if (currentCursor != null && !currentCursor.isBlank()) {
       return currentCursor;
@@ -361,7 +349,7 @@ public class VideoService {
     if (page.isEmpty()) {
       return null;
     }
-    return encodeCursor(page.get(page.size() - 1), viewerUserId);
+    return encodeCursor(page.get(page.size() - 1));
   }
 
   private static String normalize(String value) {
@@ -375,9 +363,9 @@ public class VideoService {
     return value != null ? value : 0L;
   }
 
-  private record FeedCursor(BigDecimal recommendationScore, LocalDateTime createdAt, Long id) {
+  private record FeedCursor(LocalDateTime createdAt, Long id) {
     private static FeedCursor empty() {
-      return new FeedCursor(null, null, null);
+      return new FeedCursor(null, null);
     }
   }
 }

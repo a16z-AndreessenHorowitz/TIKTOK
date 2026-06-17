@@ -11,8 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.back.dto.ApiResponse;
 import com.example.back.dto.VideoLikeStatusDTO;
-import com.example.back.exception.InvalidTokenException;
-import com.example.back.security.JwtTokenService;
+import com.example.back.security.JwtAuthorizationService;
 import com.example.back.service.VideoLikeService;
 
 import lombok.RequiredArgsConstructor;
@@ -23,13 +22,13 @@ import lombok.RequiredArgsConstructor;
 public class VideoLikeController {
 
   private final VideoLikeService videoLikeService;
-  private final JwtTokenService jwtTokenService;
+  private final JwtAuthorizationService jwtAuthorizationService;
 
   @GetMapping("/{videoId}/like")
   public ApiResponse<VideoLikeStatusDTO> getLikeStatus(
       @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
       @PathVariable long videoId) {
-    long userId = requireUserId(authorization);
+    long userId = jwtAuthorizationService.requireUser(authorization).userId();
     return ApiResponse.of(200, "Success", videoLikeService.getLikeStatus(userId, videoId));
   }
 
@@ -37,7 +36,7 @@ public class VideoLikeController {
   public ApiResponse<VideoLikeStatusDTO> like(
       @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
       @PathVariable long videoId) {
-    long userId = requireUserId(authorization);
+    long userId = jwtAuthorizationService.requireUser(authorization).userId();
     return ApiResponse.of(200, "Liked", videoLikeService.like(userId, videoId));
   }
 
@@ -45,18 +44,7 @@ public class VideoLikeController {
   public ApiResponse<VideoLikeStatusDTO> unlike(
       @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
       @PathVariable long videoId) {
-    long userId = requireUserId(authorization);
+    long userId = jwtAuthorizationService.requireUser(authorization).userId();
     return ApiResponse.of(200, "Unliked", videoLikeService.unlike(userId, videoId));
-  }
-
-  private long requireUserId(String authorization) {
-    if (authorization == null || !authorization.startsWith("Bearer ")) {
-      throw new InvalidTokenException();
-    }
-    String token = authorization.substring("Bearer ".length()).trim();
-    if (token.isEmpty()) {
-      throw new InvalidTokenException();
-    }
-    return jwtTokenService.parseAccessToken(token).userId();
   }
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { followUser, unfollowUser } from "../../api/followsApi";
-import { recordVideoShare, recordVideoView } from "../../api/videoInteractionsApi";
+import { recordVideoShare, recordVideoViewBatch } from "../../api/videoInteractionsApi";
 import { likeVideo, unlikeVideo } from "../../api/videoLikesApi";
 import { saveVideo, unsaveVideo } from "../../api/videoSavesApi";
 import { fetchVideoFeedPage } from "../../api/videosApi";
@@ -14,6 +14,8 @@ import "./HomePage.css";
 const FEED_AUDIO_KEY = "tt_feed_audio";
 const FEED_PAGE_LIMIT = 8;
 const FEED_PREFETCH_DISTANCE = 3;
+/** Số video tích lũy trước khi tự động gửi batch */
+const WATCH_BATCH_FLUSH_SIZE = 4;
 const DEFAULT_FEED_AUDIO = {
   volume: 0.8,
   muted: true,
@@ -200,6 +202,8 @@ export default function Home() {
   const interactionSessionRef = useRef(null);
   /** currentTime của video ở lần timeupdate trước — để tính delta chính xác */
   const lastVideoTimeRef = useRef(0);
+  /** Buffer tích lũy watch-time, flush theo batch thay vì gửi từng cái */
+  const watchBatchRef = useRef([]);
   const isLoggedInRef = useRef(isLoggedIn);
   const videosRef = useRef(videos);
   const nextCursorRef = useRef(null);
@@ -387,26 +391,44 @@ export default function Home() {
     );
   }, []);
 
-  const flushVideoInteraction = useCallback((options = {}) => {
-    const session = interactionSessionRef.current;
-    if (!session?.videoId) return;
-
-    // Lấy tổng giây đã tích lũy qua timeupdate (chính xác hơn Date.now)
-    const watchTime = session.watchedSeconds ?? 0;
-
-    interactionSessionRef.current = null;
-    lastVideoTimeRef.current = 0;
-
+  /**
+   * Flush batch buffer lên server.
+   * @param {{ keepalive?: boolean }} options
+   */
+  const flushWatchBatch = useCallback((options = {}) => {
     if (!isLoggedInRef.current) return;
+    const items = watchBatchRef.current.splice(0); // lấy hết + xóa buffer
+    if (items.length === 0) return;
 
-    if (watchTime < 1.0) return; // Bỏ qua scroll quá nhanh (< 1 giây)
-
-    recordVideoView(session.videoId, watchTime, options).catch((err) => {
+    recordVideoViewBatch(items, options).catch((err) => {
       if (err?.status !== 401 && err?.status !== 403) {
         console.error(err);
       }
     });
   }, []);
+
+  /**
+   * Kết thúc session xem của video hiện tại:
+   * push watch-time vào buffer, tự flush nếu buffer đủ WATCH_BATCH_FLUSH_SIZE.
+   */
+  const flushVideoInteraction = useCallback((options = {}) => {
+    const session = interactionSessionRef.current;
+    if (!session?.videoId) return;
+
+    const watchTime = session.watchedSeconds ?? 0;
+    interactionSessionRef.current = null;
+    lastVideoTimeRef.current = 0;
+
+    if (!isLoggedInRef.current) return;
+    if (watchTime < 1.0) return; // bỏ qua scroll quá nhanh (< 1 giây)
+
+    watchBatchRef.current.push({ videoId: session.videoId, watchTime });
+
+    // Tự flush khi buffer đầy
+    if (watchBatchRef.current.length >= WATCH_BATCH_FLUSH_SIZE) {
+      flushWatchBatch(options);
+    }
+  }, [flushWatchBatch]);
 
   const startVideoInteraction = useCallback((index) => {
     const video = videosRef.current[index];
@@ -672,17 +694,18 @@ export default function Home() {
 
   useEffect(() => {
     const flushBeforeLeaving = () => {
+      // Flush session hiện tại vào buffer, rồi gửi toàn bộ buffer lên server
       flushVideoInteraction({ keepalive: true });
+      flushWatchBatch({ keepalive: true });
     };
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
-        // KHÔNG flush session — chỉ pause video để timeupdate ngừng fire
-        // Session vẫn còn nguyên, watchedSeconds được giữ lại
+        // Chỉ pause video — session giữ nguyên, timeupdate dừng tự nhiên
         const activeVideo = videoRefs.current[activeIndexRef.current];
         if (activeVideo && !activeVideo.paused) activeVideo.pause();
       } else if (document.visibilityState === "visible") {
-        // Resume lại video, tiếp tục cộng dồn vào session cũ (không tạo session mới)
+        // Resume video, tiếp tục cộng dồn vào session cũ
         playActiveVideo(activeIndexRef.current);
       }
     };
@@ -694,7 +717,7 @@ export default function Home() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       flushBeforeLeaving();
     };
-  }, [flushVideoInteraction, playActiveVideo]);
+  }, [flushVideoInteraction, flushWatchBatch, playActiveVideo]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });

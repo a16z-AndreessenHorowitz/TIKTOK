@@ -11,8 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.back.dto.ApiResponse;
 import com.example.back.dto.VideoSaveStatusDTO;
-import com.example.back.exception.InvalidTokenException;
-import com.example.back.security.JwtTokenService;
+import com.example.back.security.JwtAuthorizationService;
 import com.example.back.service.VideoSaveService;
 
 import lombok.RequiredArgsConstructor;
@@ -23,13 +22,13 @@ import lombok.RequiredArgsConstructor;
 public class VideoSaveController {
 
   private final VideoSaveService videoSaveService;
-  private final JwtTokenService jwtTokenService;
+  private final JwtAuthorizationService jwtAuthorizationService;
 
   @GetMapping("/{videoId}/save")
   public ApiResponse<VideoSaveStatusDTO> getSaveStatus(
       @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
       @PathVariable long videoId) {
-    long userId = requireUserId(authorization);
+    long userId = jwtAuthorizationService.requireUser(authorization).userId();
     return ApiResponse.of(200, "Success", videoSaveService.getSaveStatus(userId, videoId));
   }
 
@@ -37,7 +36,7 @@ public class VideoSaveController {
   public ApiResponse<VideoSaveStatusDTO> save(
       @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
       @PathVariable long videoId) {
-    long userId = requireUserId(authorization);
+    long userId = jwtAuthorizationService.requireUser(authorization).userId();
     return ApiResponse.of(200, "Saved", videoSaveService.save(userId, videoId));
   }
 
@@ -45,18 +44,7 @@ public class VideoSaveController {
   public ApiResponse<VideoSaveStatusDTO> unsave(
       @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
       @PathVariable long videoId) {
-    long userId = requireUserId(authorization);
+    long userId = jwtAuthorizationService.requireUser(authorization).userId();
     return ApiResponse.of(200, "Unsaved", videoSaveService.unsave(userId, videoId));
-  }
-
-  private long requireUserId(String authorization) {
-    if (authorization == null || !authorization.startsWith("Bearer ")) {
-      throw new InvalidTokenException();
-    }
-    String token = authorization.substring("Bearer ".length()).trim();
-    if (token.isEmpty()) {
-      throw new InvalidTokenException();
-    }
-    return jwtTokenService.parseAccessToken(token).userId();
   }
 }

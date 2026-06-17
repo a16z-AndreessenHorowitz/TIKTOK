@@ -9,6 +9,7 @@ import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.example.back.entity.UserEntity.UserRole;
 import com.example.back.exception.InvalidTokenException;
 
 import io.jsonwebtoken.Claims;
@@ -45,7 +46,7 @@ public class JwtTokenService {
     key = Keys.hmacShaKeyFor(bytes);
   }
 
-  public String createAccessToken(long userId, String username, String email) {
+  public String createAccessToken(long userId, String username, String email, UserRole role) {
     Instant now = Instant.now();
     Instant exp = now.plusSeconds(accessTtlMinutes * 60);
     return Jwts.builder()
@@ -53,6 +54,7 @@ public class JwtTokenService {
         .claim(CLAIM_USE, USE_ACCESS)
         .claim("username", username)
         .claim("email", email)
+        .claim("role", role.name())
         .issuedAt(Date.from(now))
         .expiration(Date.from(exp))
         .signWith(key)
@@ -80,8 +82,9 @@ public class JwtTokenService {
       return new AccessClaims(
           Long.parseLong(c.getSubject()),
           c.get("username", String.class),
-          c.get("email", String.class));
-    } catch (JwtException | NumberFormatException e) {
+          c.get("email", String.class),
+          UserRole.valueOf(c.get("role", String.class)));
+    } catch (JwtException | IllegalArgumentException | NullPointerException e) {
       throw new InvalidTokenException();
     }
   }
@@ -102,5 +105,9 @@ public class JwtTokenService {
     return accessTtlMinutes * 60;
   }
 
-  public record AccessClaims(long userId, String username, String email) {}
+  public record AccessClaims(long userId, String username, String email, UserRole role) {
+    public boolean hasRole(UserRole expectedRole) {
+      return role == expectedRole;
+    }
+  }
 }

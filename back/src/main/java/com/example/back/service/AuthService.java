@@ -19,6 +19,7 @@ import com.example.back.dto.VerifyForgotPasswordOtpRequest;
 import com.example.back.dto.auth.AuthTokenBundle;
 import com.example.back.dto.auth.AuthUserDto;
 import com.example.back.entity.UserEntity;
+import com.example.back.entity.UserEntity.UserRole;
 import com.example.back.exception.BadLoginException;
 import com.example.back.exception.DuplicateEmailException;
 import com.example.back.exception.InvalidTokenException;
@@ -70,13 +71,19 @@ public class AuthService {
   }
 
   private AuthTokenBundle issueTokensForUser(UserEntity user) {
+    UserRole role = roleOrDefault(user);
     AuthUserDto brief =
         new AuthUserDto(
-            user.getId(), user.getUsername(), user.getEmail(), user.getAvatarUrl());
+            user.getId(), user.getUsername(), user.getEmail(), user.getAvatarUrl(), role);
     String access =
-        jwtTokenService.createAccessToken(user.getId(), user.getUsername(), user.getEmail());
+        jwtTokenService.createAccessToken(
+            user.getId(), user.getUsername(), user.getEmail(), role);
     String refresh = jwtTokenService.createRefreshToken(user.getId());
     return new AuthTokenBundle(access, refresh, jwtTokenService.accessTtlSeconds(), brief);
+  }
+
+  private UserRole roleOrDefault(UserEntity user) {
+    return user.getRole() == null ? UserRole.USER : user.getRole();
   }
 
   @Transactional
@@ -98,6 +105,7 @@ public class AuthService {
     data.put("id", user.getId());
     data.put("username", user.getUsername());
     data.put("email", user.getEmail());
+    data.put("role", roleOrDefault(user).name());
     return data;
   }
 

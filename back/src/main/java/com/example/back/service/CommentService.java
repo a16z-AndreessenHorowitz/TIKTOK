@@ -15,7 +15,6 @@ import com.example.back.entity.VideoEntity;
 import com.example.back.repository.CommentRepository;
 import com.example.back.repository.UserRepository;
 import com.example.back.repository.VideoRepository;
-import com.example.back.repository.VideoScoreDirtyRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,7 +28,6 @@ public class CommentService {
   private final CommentRepository commentRepository;
   private final VideoRepository videoRepository;
   private final UserRepository userRepository;
-  private final VideoScoreDirtyRepository videoScoreDirtyRepository;
 
   @Transactional(readOnly = true)
   public List<VideoCommentDTO> getVideoComments(long videoId) {
@@ -73,7 +71,6 @@ public class CommentService {
 
     VideoCommentDTO savedComment =
         toDto(commentRepository.save(comment), List.of(), nextVideoCommentCount);
-    videoScoreDirtyRepository.markDirty(videoId);
     return savedComment;
   }
 
