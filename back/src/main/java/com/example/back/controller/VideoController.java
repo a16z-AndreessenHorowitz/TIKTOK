@@ -16,6 +16,7 @@ import com.example.back.dto.ApiResponse;
 import com.example.back.dto.VideoFeedResponseDTO;
 import com.example.back.dto.VideosResponseDTO;
 import com.example.back.security.JwtAuthorizationService;
+import com.example.back.service.FeedService;
 import com.example.back.service.VideoService;
 
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class VideoController {
 
   private final VideoService videoService;
+  private final FeedService feedService;
   private final JwtAuthorizationService jwtAuthorizationService;
 
   @GetMapping("/feed")
@@ -37,7 +39,7 @@ public class VideoController {
     return ApiResponse.of(
         200,
         "Success",
-        videoService.getFeed(
+        feedService.getFeed(
             cursor, limit, jwtAuthorizationService.readOptionalUserId(authorization), excludeIds));
   }
 

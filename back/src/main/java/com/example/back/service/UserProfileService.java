@@ -116,7 +116,7 @@ public class UserProfileService {
         .viewCount(defaultLong(video.getViewCount()))
         .likeCount(defaultLong(video.getLikeCount()))
         .commentCount(defaultLong(video.getCommentCount()))
-        .shareCount(0L)
+        .shareCount(defaultLong(video.getShareCount()))
         .duration(video.getDuration())
         .isLiked(false)
         .isFollowed(false)

@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.back.dto.RecordVideoViewBatchRequest;
 import com.example.back.dto.RecordVideoViewRequest;
 import com.example.back.dto.VideoInteractionDTO;
+import com.example.back.event.VideoCounterEventQueue;
+import com.example.back.event.VideoCounterType;
 import com.example.back.entity.UserEntity;
 import com.example.back.entity.VideoEntity;
 import com.example.back.entity.VideoInteraction;
@@ -30,10 +32,12 @@ public class VideoInteractionService {
   private final VideoInteractionRepository videoInteractionRepository;
   private final UserRepository userRepository;
   private final VideoRepository videoRepository;
+  private final VideoCounterEventQueue videoCounterEventQueue;
 
   @Transactional
   public VideoInteractionDTO recordView(long userId, long videoId, RecordVideoViewRequest request) {
-    return recordViewInternal(userId, videoId, request != null ? request.getWatchTime() : null);
+    UserEntity user = requireUser(userId);
+    return recordViewInternal(userId, user, videoId, request != null ? request.getWatchTime() : null);
   }
 
   @Transactional
@@ -43,13 +47,14 @@ public class VideoInteractionService {
       return List.of();
     }
 
-    requireUser(userId);
+    UserEntity user = requireUser(userId);
     return request.getItems().stream()
-        .map(item -> recordViewInternal(userId, item.getVideoId(), item.getWatchTime()))
+        .map(item -> recordViewInternal(userId, user, item.getVideoId(), item.getWatchTime()))
         .toList();
   }
 
-  private VideoInteractionDTO recordViewInternal(long userId, long videoId, BigDecimal rawWatchTime) {
+  private VideoInteractionDTO recordViewInternal(
+      long userId, UserEntity user, long videoId, BigDecimal rawWatchTime) {
     VideoEntity video = requireVideo(videoId);
     BigDecimal watchTime = normalizeWatchTime(rawWatchTime, video.getDuration());
     BigDecimal completionRate = calculateCompletionRate(watchTime, video.getDuration());
@@ -62,26 +67,22 @@ public class VideoInteractionService {
                 userId, videoId, VideoInteractionType.VIEW)
             > 0;
 
-    VideoInteraction saved = save(userId, video, interactionType, watchTime, completionRate, rewatch);
+    VideoInteraction saved = save(user, video, interactionType, watchTime, completionRate, rewatch);
 
     if (interactionType == VideoInteractionType.VIEW && !rewatch) {
-      video.setViewCount((video.getViewCount() == null ? 0 : video.getViewCount()) + 1);
-      videoRepository.save(video);
+      videoCounterEventQueue.publish(VideoCounterType.VIEW, videoId, 1);
     }
 
     return toDto(saved);
   }
 
   private VideoInteraction save(
-      long userId,
+      UserEntity user,
       VideoEntity video,
       VideoInteractionType interactionType,
       BigDecimal watchTime,
       BigDecimal completionRate,
       boolean rewatch) {
-    requireUser(userId);
-    UserEntity user = userRepository.getReference(userId);
-
     VideoInteraction interaction = new VideoInteraction();
     interaction.setUser(user);
     interaction.setVideo(video);
@@ -98,10 +99,11 @@ public class VideoInteractionService {
         .orElseThrow(() -> new IllegalArgumentException("Video không tồn tại."));
   }
 
-  private void requireUser(long userId) {
+  private UserEntity requireUser(long userId) {
     if (!userRepository.existsById(userId)) {
       throw new IllegalArgumentException("Người dùng không tồn tại.");
     }
+    return userRepository.getReference(userId);
   }
 
   private static BigDecimal normalizeWatchTime(BigDecimal watchTime, Integer duration) {

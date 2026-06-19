@@ -71,7 +71,10 @@ public class VideoEntity {
 
   @Column(name = "save_count")
   private Long saveCount;
-  
+
+  @Column(name = "share_count")
+  private Long shareCount;
+
   @Column(name = "created_at")
   private LocalDateTime createdAt;
 
@@ -102,6 +105,9 @@ public class VideoEntity {
     }
     if (saveCount == null) {
       saveCount = 0L;
+    }
+    if (shareCount == null) {
+      shareCount = 0L;
     }
   }
 }

@@ -34,6 +34,11 @@ public class UserEntity {
     ADMIN
   }
 
+  public enum UserStatus {
+    ACTIVE,
+    BANNED
+  }
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -57,6 +62,13 @@ public class UserEntity {
   @Enumerated(EnumType.STRING)
   @Column(name = "role", nullable = false, columnDefinition = "ENUM('USER','ADMIN') DEFAULT 'USER'")
   private UserRole role = UserRole.USER;
+
+  @Enumerated(EnumType.STRING)
+  @Column(
+      name = "status",
+      nullable = false,
+      columnDefinition = "ENUM('ACTIVE','BANNED') DEFAULT 'ACTIVE'")
+  private UserStatus status = UserStatus.ACTIVE;
 
   @Column(name = "avatar_url", length = 512)
   private String avatarUrl;
@@ -89,6 +101,9 @@ public class UserEntity {
     }
     if (role == null) {
       role = UserRole.USER;
+    }
+    if (status == null) {
+      status = UserStatus.ACTIVE;
     }
     if (displayName == null || displayName.isBlank()) {
       displayName = username;

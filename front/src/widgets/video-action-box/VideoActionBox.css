@@ -160,39 +160,81 @@
   white-space: nowrap;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 767px) {
   .VideoActionBox {
+    --mobile-action-column-width: 58px;
+    --mobile-avatar-size: 52px;
+
     position: absolute;
-    right: 10px;
+    right: 6px;
     bottom: 10px;
     flex-basis: auto;
+    width: var(--mobile-action-column-width);
     margin-bottom: 0;
-    gap: 12px;
+    gap: 10px;
+    align-items: center;
+    color: #fff;
   }
 
   .VideoActionBox__profile {
-    width: 50px;
-    height: 58px;
+    width: var(--mobile-action-column-width);
+    height: 60px;
+  }
+
+  .VideoActionBox__avatar-btn {
+    width: var(--mobile-avatar-size);
+    height: var(--mobile-avatar-size);
+    margin-inline: auto;
   }
 
   .VideoActionBox__avatar {
-    width: 48px;
-    height: 48px;
+    width: var(--mobile-avatar-size);
+    height: var(--mobile-avatar-size);
+    margin: 0;
+  }
+
+  .VideoActionBox__follow-badge {
+    bottom: -1px;
+  }
+
+  .VideoActionBox__list {
+    width: var(--mobile-action-column-width);
   }
 
   .VideoActionBox__action {
-    width: 58px;
+    width: var(--mobile-action-column-width);
   }
 
   .VideoActionBox__icon {
-    width: 50px;
-    height: 50px;
-    background: rgba(255, 255, 255, 0.92);
-    font-size: 22px;
+    width: var(--mobile-action-column-width);
+    height: 42px;
+    background: transparent;
+    color: #fff;
+    font-size: 30px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
   }
 
   .VideoActionBox__count {
     color: #fff;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  }
+
+  .VideoActionBox__action:hover .VideoActionBox__icon {
+    background: transparent;
+    transform: none;
+  }
+
+  .VideoActionBox__action--active .VideoActionBox__icon,
+  .VideoActionBox__action--active[aria-label="Thích"] .VideoActionBox__icon,
+  .VideoActionBox__action--active[aria-label="Lưu"] .VideoActionBox__icon {
+    background: transparent;
+  }
+
+  .VideoActionBox__action--active[aria-label="Thích"] .VideoActionBox__icon {
+    color: #fe2c55;
+  }
+
+  .VideoActionBox__action--active[aria-label="Lưu"] .VideoActionBox__icon {
+    color: #face15;
   }
 }

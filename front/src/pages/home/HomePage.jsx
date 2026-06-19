@@ -14,6 +14,7 @@ import "./HomePage.css";
 const FEED_AUDIO_KEY = "tt_feed_audio";
 const FEED_PAGE_LIMIT = 8;
 const FEED_PREFETCH_DISTANCE = 3;
+const MOBILE_FEED_QUERY = "(max-width: 767px)";
 /** Số video tích lũy trước khi tự động gửi batch */
 const WATCH_BATCH_FLUSH_SIZE = 4;
 const DEFAULT_FEED_AUDIO = {
@@ -119,6 +120,15 @@ function saveFeedAudio(feedAudio) {
   sessionStorage.setItem(FEED_AUDIO_KEY, JSON.stringify(feedAudio));
 }
 
+function isMobileFeedViewport() {
+  if (typeof window === "undefined") return false;
+  return Boolean(window.matchMedia?.(MOBILE_FEED_QUERY)?.matches);
+}
+
+function getPlaybackVolume(feedAudio) {
+  return isMobileFeedViewport() ? 1 : feedAudio.volume;
+}
+
 
 function VideoCaption({ caption, expanded, onExpand, onCollapse }) {
   const textRef = useRef(null);
@@ -190,6 +200,8 @@ export default function Home() {
   const [likeLoadingVideoIds, setLikeLoadingVideoIds] = useState(() => new Set());
   const [saveLoadingVideoIds, setSaveLoadingVideoIds] = useState(() => new Set());
   const [followLoadingUserIds, setFollowLoadingUserIds] = useState(() => new Set());
+  const [feedStatus, setFeedStatus] = useState("loading");
+  const [feedErrorMessage, setFeedErrorMessage] = useState("");
   /** Một lần bật/tắt tiếng & mức volume cho cả feed (giống TikTok) */
   const [feedAudio, setFeedAudio] = useState(readFeedAudio);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -208,6 +220,10 @@ export default function Home() {
   const videosRef = useRef(videos);
   const nextCursorRef = useRef(null);
   const loadingFeedRef = useRef(false);
+  const feedReloadRequestRef = useRef(0);
+  const mobileAudioUnlockedRef = useRef(false);
+  const mobileAudioUnlockingRef = useRef(false);
+  const mobileAudioUnlockAttemptRef = useRef(0);
 
   useEffect(() => {
     isLoggedInRef.current = isLoggedIn;
@@ -650,7 +666,7 @@ export default function Home() {
   const applyAudioToVideo = useCallback((video, index, audio = feedAudioRef.current) => {
     if (!video) return;
     const isActiveVideo = index === activeIndexRef.current;
-    video.volume = isActiveVideo ? audio.volume : 0;
+    video.volume = isActiveVideo ? getPlaybackVolume(audio) : 0;
     video.muted = !isActiveVideo || audio.muted;
   }, []);
 
@@ -669,6 +685,12 @@ export default function Home() {
 
     playPromise.catch((err) => {
       if (err?.name !== "NotAllowedError") return;
+      if (
+        isMobileFeedViewport() &&
+        (mobileAudioUnlockingRef.current || mobileAudioUnlockedRef.current)
+      ) {
+        return;
+      }
 
       const mutedAudio = { ...feedAudioRef.current, muted: true };
       feedAudioRef.current = mutedAudio;
@@ -731,36 +753,53 @@ export default function Home() {
     let cancelled = false;
 
     const fetchData = async () => {
-      if (loadingFeedRef.current) return;
+      const requestId = feedReloadRequestRef.current + 1;
+      feedReloadRequestRef.current = requestId;
       loadingFeedRef.current = true;
+      setFeedStatus("loading");
+      setFeedErrorMessage("");
 
       try {
         const page = await fetchFeedPage(null);
-        if (cancelled) return;
+        if (cancelled || requestId !== feedReloadRequestRef.current) return;
 
         nextCursorRef.current = page.nextCursor;
         videoRefs.current = [];
         activeIndexRef.current = 0;
+        containerRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
         setNextCursor(page.nextCursor);
         setActiveIndex(0);
         interactionSessionRef.current = null;
+        lastVideoTimeRef.current = 0;
         setFailedVideos(new Set());
         setExpandedCaptions(new Set());
         setVideoRatios({});
         setIsCommentPanelOpen(false);
         setLikeLoadingVideoIds(new Set());
         setVideos(prepareFeed(page.items, pinnedVideo));
+        setFeedStatus("ready");
       } catch (err) {
         console.error(err);
+        if (!cancelled && requestId === feedReloadRequestRef.current) {
+          setVideos([]);
+          setFeedStatus("error");
+          setFeedErrorMessage(err?.message || "Không tải được danh sách video.");
+        }
       } finally {
-        loadingFeedRef.current = false;
+        if (requestId === feedReloadRequestRef.current) {
+          loadingFeedRef.current = false;
+          window.dispatchEvent(new CustomEvent("tt-home-refresh-complete"));
+        }
       }
     };
 
     fetchData();
+    window.addEventListener("tt-home-refresh", fetchData);
 
     return () => {
       cancelled = true;
+      window.removeEventListener("tt-home-refresh", fetchData);
     };
   }, [pinnedVideo, pinnedVideoId]);
 
@@ -870,6 +909,57 @@ export default function Home() {
     }));
   };
 
+  const unlockMobileFeedAudio = useCallback(() => {
+    if (!isMobileFeedViewport() || mobileAudioUnlockedRef.current) return;
+
+    const video = videoRefs.current[activeIndexRef.current];
+    if (!video) return;
+
+    const attemptId = mobileAudioUnlockAttemptRef.current + 1;
+    mobileAudioUnlockAttemptRef.current = attemptId;
+    mobileAudioUnlockingRef.current = true;
+
+    const mobileAudio = { ...feedAudioRef.current, volume: 1, muted: false, lastVolume: 1 };
+    feedAudioRef.current = mobileAudio;
+    setFeedAudio(mobileAudio);
+
+    video.pause();
+    video.removeAttribute("muted");
+    video.defaultMuted = false;
+    applyAudioToVideo(video, activeIndexRef.current, mobileAudio);
+
+    const playPromise = video.play();
+    if (!playPromise?.then) {
+      mobileAudioUnlockedRef.current = true;
+      mobileAudioUnlockingRef.current = false;
+      return;
+    }
+
+    playPromise.then(() => {
+      if (attemptId !== mobileAudioUnlockAttemptRef.current) return;
+      video.removeAttribute("muted");
+      video.defaultMuted = false;
+      video.muted = false;
+      video.volume = 1;
+      mobileAudioUnlockedRef.current = true;
+      mobileAudioUnlockingRef.current = false;
+    }).catch(() => {
+      if (attemptId !== mobileAudioUnlockAttemptRef.current) return;
+      mobileAudioUnlockingRef.current = false;
+      if (!video.paused && !video.muted) {
+        mobileAudioUnlockedRef.current = true;
+        return;
+      }
+
+      mobileAudioUnlockedRef.current = false;
+      const mutedAudio = { ...mobileAudio, muted: true };
+      feedAudioRef.current = mutedAudio;
+      setFeedAudio(mutedAudio);
+      applyAudioToVideo(video, activeIndexRef.current, mutedAudio);
+      video.play().catch(() => {});
+    });
+  }, [applyAudioToVideo]);
+
   const markVideoReady = (rowKey) => {
     setFailedVideos((prev) => {
       if (!prev.has(rowKey)) return prev;
@@ -924,19 +1014,21 @@ export default function Home() {
   // EMPTY
   // =========================
   if (videos.length === 0) {
+    const emptyTitle =
+      feedStatus === "loading"
+        ? "Đang tải video..."
+        : feedStatus === "error"
+          ? "Không tải được feed"
+          : "Chưa có video";
+
     return (
-      <div
-        style={{
-          height: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          color: "#fff",
-          background: "white",
-          fontSize: "20px",
-        }}
-      >
-        Không có video
+      <div className="feed-state" role={feedStatus === "loading" ? "status" : "alert"}>
+        <div>
+          <p className="feed-state__title">{emptyTitle}</p>
+          {feedStatus === "error" && feedErrorMessage ? (
+            <p className="feed-state__detail">{feedErrorMessage}</p>
+          ) : null}
+        </div>
       </div>
     );
   }
@@ -953,6 +1045,11 @@ export default function Home() {
         ref={containerRef}
         className={`feed-container${showCommentPanel ? " feed-container--comments-open" : ""}`}
         onScroll={handleFeedScroll}
+        onPointerDownCapture={unlockMobileFeedAudio}
+        onPointerUpCapture={unlockMobileFeedAudio}
+        onTouchStartCapture={unlockMobileFeedAudio}
+        onTouchEndCapture={unlockMobileFeedAudio}
+        onClickCapture={unlockMobileFeedAudio}
       >
         {videos.map((video, index) => {
           const rowKey = clipListKey(video, index);

@@ -4,6 +4,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.back.dto.VideoLikeStatusDTO;
+import com.example.back.event.VideoCounterEventQueue;
+import com.example.back.event.VideoCounterType;
 import com.example.back.entity.VideoEntity;
 import com.example.back.repository.LikeRepository;
 import com.example.back.repository.UserRepository;
@@ -18,12 +20,19 @@ public class VideoLikeService {
   private final LikeRepository likeRepository;
   private final UserRepository userRepository;
   private final VideoRepository videoRepository;
+  private final VideoCounterEventQueue videoCounterEventQueue;
 
   @Transactional(readOnly = true)
   public VideoLikeStatusDTO getLikeStatus(long userId, long videoId) {
     VideoEntity video = findVideo(videoId);
     boolean liked = likeRepository.existsByUserIdAndVideoId(userId, videoId);
-    return toStatus(video, liked);
+    return VideoLikeStatusDTO.builder()
+        .videoId(video.getId())
+        .liked(liked)
+        .likeCount(
+            videoCounterEventQueue.projectedCount(
+                VideoCounterType.LIKE, videoId, defaultLong(video.getLikeCount())))
+        .build();
   }
 
   @Transactional
@@ -32,8 +41,12 @@ public class VideoLikeService {
     requireVideo(videoId);
 
     int inserted = likeRepository.insertIgnore(userId, videoId);
+    if (inserted > 0) {
+      videoCounterEventQueue.publish(VideoCounterType.LIKE, videoId, 1);
+    }
     long likeCount =
-        inserted > 0 ? videoRepository.incrementLikeCount(videoId) : videoRepository.getLikeCount(videoId);
+        videoCounterEventQueue.projectedCount(
+            VideoCounterType.LIKE, videoId, videoRepository.getLikeCount(videoId));
 
     return VideoLikeStatusDTO.builder()
         .videoId(videoId)
@@ -46,8 +59,12 @@ public class VideoLikeService {
   public VideoLikeStatusDTO unlike(long userId, long videoId) {
     requireVideo(videoId);
     int deleted = likeRepository.deleteByUserIdAndVideoId(userId, videoId);
+    if (deleted > 0) {
+      videoCounterEventQueue.publish(VideoCounterType.LIKE, videoId, -1);
+    }
     long likeCount =
-        deleted > 0 ? videoRepository.decrementLikeCount(videoId) : videoRepository.getLikeCount(videoId);
+        videoCounterEventQueue.projectedCount(
+            VideoCounterType.LIKE, videoId, videoRepository.getLikeCount(videoId));
 
     return VideoLikeStatusDTO.builder()
         .videoId(videoId)
@@ -72,14 +89,6 @@ public class VideoLikeService {
     if (!videoRepository.existsById(videoId)) {
       throw new IllegalArgumentException("Video không tồn tại.");
     }
-  }
-
-  private static VideoLikeStatusDTO toStatus(VideoEntity video, boolean liked) {
-    return VideoLikeStatusDTO.builder()
-        .videoId(video.getId())
-        .liked(liked)
-        .likeCount(defaultLong(video.getLikeCount()))
-        .build();
   }
 
   private static long defaultLong(Long value) {

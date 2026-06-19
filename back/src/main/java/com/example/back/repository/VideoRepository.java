@@ -7,12 +7,11 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
+import com.example.back.event.VideoCounterType;
 import com.example.back.entity.VideoEntity;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
-import jakarta.persistence.TypedQuery;
 
 @Repository
 public class VideoRepository {
@@ -37,24 +36,6 @@ public class VideoRepository {
             .setParameter(1, id)
             .getResultList();
     return !rows.isEmpty();
-  }
-
-  public long incrementLikeCount(long videoId) {
-    entityManager
-        .createNativeQuery(
-            "UPDATE videos SET like_count = COALESCE(like_count, 0) + 1 WHERE id = ?")
-        .setParameter(1, videoId)
-        .executeUpdate();
-    return getLongColumn(videoId, "like_count");
-  }
-
-  public long decrementLikeCount(long videoId) {
-    entityManager
-        .createNativeQuery(
-            "UPDATE videos SET like_count = GREATEST(COALESCE(like_count, 0) - 1, 0) WHERE id = ?")
-        .setParameter(1, videoId)
-        .executeUpdate();
-    return getLongColumn(videoId, "like_count");
   }
 
   public long incrementCommentCount(long videoId) {
@@ -96,79 +77,43 @@ public class VideoRepository {
     return getLongColumn(videoId, "comment_count");
   }
 
+  public long getShareCount(long videoId) {
+    return getLongColumn(videoId, "share_count");
+  }
+
+  public void applyCounterDelta(VideoCounterType type, long videoId, long delta) {
+    if (delta == 0L) {
+      return;
+    }
+
+    String columnName = counterColumnName(type);
+    entityManager
+        .createNativeQuery(
+            "UPDATE videos SET "
+                + columnName
+                + " = GREATEST(COALESCE("
+                + columnName
+                + ", 0) + ?, 0) WHERE id = ?")
+        .setParameter(1, delta)
+        .setParameter(2, videoId)
+        .executeUpdate();
+  }
+
   public List<VideoEntity> findFeedPage(
       Long viewerUserId,
       List<Long> excludedVideoIds,
       LocalDateTime cursorCreatedAt,
       Long cursorId,
-      int limit) {
+      int limit,
+      boolean excludeViewedVideos) {
     List<String> predicates = new ArrayList<>();
+    predicates.add("(v.status IS NULL OR v.status = 'published')");
+    predicates.add("(v.privacy IS NULL OR v.privacy = 'public')");
     if (excludedVideoIds != null && !excludedVideoIds.isEmpty()) {
       predicates.add("v.id NOT IN (:excludedVideoIds)");
     }
-    
-    if (viewerUserId != null) {
-      predicates.add(
-          """
-          NOT EXISTS (
-            SELECT 1
-            FROM video_interactions i
-            WHERE i.user_id = :viewerUserId
-              AND i.video_id = v.id
-          )
-          """);
-    }
-  
-    if (cursorCreatedAt != null && cursorId != null) {
-      predicates.add(
-          """
-          (
-            v.created_at < :cursorCreatedAt
-            OR (v.created_at = :cursorCreatedAt AND v.id < :cursorId)
-          )
-          """);
-    }
 
-    String whereClause =
-        predicates.isEmpty() ? "" : "WHERE " + String.join("\nAND ", predicates) + "\n";
-
-    Query query =
-        entityManager.createNativeQuery(
-            """
-            SELECT v.*
-            FROM videos v
-            """
-                + whereClause
-                + """
-            ORDER BY v.created_at DESC, v.id DESC
-            """,
-            VideoEntity.class);
-
-    if (excludedVideoIds != null && !excludedVideoIds.isEmpty()) {
-      query.setParameter("excludedVideoIds", excludedVideoIds);
-    }
-    if (viewerUserId != null) {
-      query.setParameter("viewerUserId", viewerUserId);
-    }
-    if (cursorCreatedAt != null && cursorId != null) {
-      query.setParameter("cursorCreatedAt", cursorCreatedAt);
-      query.setParameter("cursorId", cursorId);
-    }
-
-    return query.setMaxResults(limit).getResultList();
-  }
-
-  public List<VideoEntity> findRandomFeedPage(
-      Long viewerUserId, List<Long> excludedVideoIds, int limit) {
-    if (limit <= 0) {
-      return List.of();
-    }
-
-    List<String> predicates = new ArrayList<>();
-    if (excludedVideoIds != null && !excludedVideoIds.isEmpty()) {
-      predicates.add("v.id NOT IN :excludedVideoIds");
-    }
-    if (viewerUserId != null) {
+    if (viewerUserId != null && excludeViewedVideos) {
       predicates.add(
           """
           NOT EXISTS (
@@ -179,10 +124,20 @@ public class VideoRepository {
           )
           """);
     }
-    String whereClause =
-        predicates.isEmpty() ? "" : "WHERE " + String.join("\nAND ", predicates) + "\n";
 
-    TypedQuery<VideoEntity> query =
+    if (cursorCreatedAt != null && cursorId != null) {
+      predicates.add(
+          """
+          (
+            v.createdAt < :cursorCreatedAt
+            OR (v.createdAt = :cursorCreatedAt AND v.id < :cursorId)
+          )
+          """);
+    }
+
+    String whereClause = "WHERE " + String.join("\nAND ", predicates) + "\n";
+
+    var query =
         entityManager.createQuery(
             """
             SELECT v
@@ -191,15 +146,19 @@ public class VideoRepository {
             """
                 + whereClause
                 + """
-            ORDER BY FUNCTION('RAND')
+            ORDER BY v.createdAt DESC, v.id DESC
             """,
             VideoEntity.class);
 
     if (excludedVideoIds != null && !excludedVideoIds.isEmpty()) {
       query.setParameter("excludedVideoIds", excludedVideoIds);
     }
-    if (viewerUserId != null) {
+    if (viewerUserId != null && excludeViewedVideos) {
       query.setParameter("viewerUserId", viewerUserId);
+    }
+    if (cursorCreatedAt != null && cursorId != null) {
+      query.setParameter("cursorCreatedAt", cursorCreatedAt);
+      query.setParameter("cursorId", cursorId);
     }
 
     return query.setMaxResults(limit).getResultList();
@@ -263,5 +222,13 @@ public class VideoRepository {
             .setParameter(1, videoId)
             .getSingleResult();
     return ((Number) value).longValue();
+  }
+
+  private static String counterColumnName(VideoCounterType type) {
+    return switch (type) {
+      case VIEW -> "view_count";
+      case LIKE -> "like_count";
+      case SHARE -> "share_count";
+    };
   }
 }
