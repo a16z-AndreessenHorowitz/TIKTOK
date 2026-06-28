@@ -5,7 +5,7 @@ import { useAuth } from "../../features/auth/hooks/useAuth";
 import { openLoginModal } from "../../features/auth/model/authUi";
 import Sidebar from "../../widgets/sidebar/Sidebar";
 import TopRightActionBar from "../../widgets/top-right-action-bar/TopRightActionBar";
-import "./MainLayout.css"
+import "../../styles/MainLayout.css"
 
 function HomeIcon() {
   return (

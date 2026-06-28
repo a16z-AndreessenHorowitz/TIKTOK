@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import UploadPreviewPhone from "../../features/upload/components/UploadPreviewPhone";
 import { uploadVideo } from "../../api/videosApi";
 import { queueToast } from "../../shared/lib/toastSession";
-import "./UploadPage.css";
+import "../../styles/UploadPage.css";
 
 const MAX_BYTES = 30 * 1024 * 1024 * 1024;
 const ACCEPTED_EXT = [".mp4", ".mov", ".webm", ".mkv", ".avi", ".m4v"];

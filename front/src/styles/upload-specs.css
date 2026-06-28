@@ -1,0 +1,35 @@
+.upload-specs {
+  list-style: none;
+  margin: 32px 0 0;
+  padding: 0;
+  width: 100%;
+  max-width: 900px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.upload-specs__item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.upload-specs__icon {
+  flex-shrink: 0;
+  color: rgba(22, 24, 35, 0.55);
+}
+
+.upload-specs__title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #161823;
+}
+
+.upload-specs__desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(22, 24, 35, 0.65);
+}

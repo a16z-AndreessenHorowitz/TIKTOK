@@ -1,5 +1,5 @@
 import React from "react";
-import "./MessagesPage.css";
+import "../../styles/MessagesPage.css";
 
 const DUMMY_CHATS = [
   {

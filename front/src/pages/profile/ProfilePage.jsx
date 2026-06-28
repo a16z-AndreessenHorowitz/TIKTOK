@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { fetchUserProfile, updateMyProfile } from "../../api/usersApi";
 import { getUser, saveSessionFromAuthData } from "../../features/auth/model/authSession";
 import { defaultAvatar } from "../../shared/lib/userAvatar";
-import "./ProfilePage.css";
+import "../../styles/ProfilePage.css";
 
 function formatCount(value) {
   const count = Number(value ?? 0);
@@ -233,6 +233,7 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const username = useMemo(() => String(params.username || "").replace(/^@+/, ""), [params.username]);
   const [profileState, setProfileState] = useState({
+    username,
     loading: true,
     error: null,
     profile: null,
@@ -241,16 +242,16 @@ export default function ProfilePage() {
 
   useEffect(() => {
     let cancelled = false;
-    setProfileState({ loading: true, error: null, profile: null });
 
     fetchUserProfile(username)
       .then((profile) => {
         if (cancelled) return;
-        setProfileState({ loading: false, error: null, profile });
+        setProfileState({ username, loading: false, error: null, profile });
       })
       .catch((err) => {
         if (cancelled) return;
         setProfileState({
+          username,
           loading: false,
           error: err?.message || "Không tải được hồ sơ.",
           profile: null,
@@ -262,12 +263,20 @@ export default function ProfilePage() {
     };
   }, [username]);
 
-  const { loading, error, profile } = profileState;
+  const isStaleProfile = profileState.username !== username;
+  const loading = isStaleProfile || profileState.loading;
+  const error = isStaleProfile ? null : profileState.error;
+  const profile = isStaleProfile ? null : profileState.profile;
   const videos = Array.isArray(profile?.videos) ? profile.videos : [];
   const avatarSrc = profile?.avatarUrl || defaultAvatar;
 
   const handleProfileSaved = (updatedProfile) => {
-    setProfileState({ loading: false, error: null, profile: updatedProfile });
+    setProfileState({
+      username: updatedProfile?.username || username,
+      loading: false,
+      error: null,
+      profile: updatedProfile,
+    });
     setEditingProfile(false);
     if (updatedProfile?.username && updatedProfile.username !== username) {
       navigate(`/@${encodeURIComponent(updatedProfile.username)}`, { replace: true });

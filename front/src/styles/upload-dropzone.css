@@ -1,0 +1,114 @@
+.upload-dropzone {
+  width: 100%;
+  max-width: 900px;
+  min-height: 420px;
+  padding: 48px 32px 40px;
+  background: #fff;
+  border: 2px dashed #c5d4e8;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.upload-dropzone--drag {
+  border-color: #fe2c55;
+  background: #fff8fa;
+}
+
+.upload-dropzone--busy {
+  pointer-events: none;
+  opacity: 0.92;
+}
+
+.upload-dropzone__icon {
+  margin-bottom: 20px;
+}
+
+.upload-dropzone__title {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #161823;
+}
+
+.upload-dropzone__subtitle {
+  margin: 0 0 24px;
+  font-size: 15px;
+  color: rgba(22, 24, 35, 0.65);
+}
+
+.upload-dropzone__file {
+  margin: -12px 0 16px;
+  font-size: 14px;
+  color: rgba(22, 24, 35, 0.75);
+}
+
+.upload-dropzone__btn {
+  min-width: 160px;
+  height: 44px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 4px;
+  background: #fe2c55;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.upload-dropzone__btn:hover:not(:disabled) {
+  background: #e0264c;
+}
+
+.upload-dropzone__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.upload-dropzone__input {
+  display: none;
+}
+
+.upload-dropzone__error {
+  margin: 16px 0 0;
+  font-size: 14px;
+  color: #fe2c55;
+}
+
+.upload-dropzone__progress {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  color: rgba(22, 24, 35, 0.75);
+}
+
+.upload-dropzone__progress-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: #fe2c55;
+  transition: width 0.2s ease;
+}
+
+.upload-preview__clear-btn {
+  min-width: 160px;
+  height: 44px;
+  padding: 0 24px;
+  border: 1px solid #e3e3e4;
+  border-radius: 4px;
+  background: #fff;
+  color: #161823;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.upload-preview__clear-btn:hover:not(:disabled) {
+  background: #f4f4f5;
+}

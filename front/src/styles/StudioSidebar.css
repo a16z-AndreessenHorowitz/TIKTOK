@@ -139,3 +139,10 @@
   background: rgba(22, 24, 35, 0.06);
   color: #161823;
 }
+
+@media (max-width: 767px) {
+  .studio-sidebar__brand {
+    min-height: 42px;
+    padding-left: 54px;
+  }
+}

@@ -11,7 +11,6 @@ import org.springframework.http.CacheControl;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import com.example.back.config.AvatarStorageProperties;
 
 @Configuration
 public class LocalVideoResourceConfig implements WebMvcConfigurer {

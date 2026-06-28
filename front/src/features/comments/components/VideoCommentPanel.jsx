@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { createVideoComment, fetchVideoComments } from "../../../api/videoCommentsApi";
 import { useAuth } from "../../auth/hooks/useAuth";
 import { defaultAvatar, getUserAvatarSrc } from "../../../shared/lib/userAvatar";
+import "../../../styles/VideoCommentPanel.css";
 
 const COMMENT_PAGE_SIZE = 20;
 

@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import "./StudioSidebar.css";
+import "../../styles/StudioSidebar.css";
 
 const MANAGE_NAV = [
   { to: "/upload", label: "Trang chủ", icon: "home", end: true },
@@ -78,12 +78,13 @@ function NavIcon({ type }) {
   }
 }
 
-function StudioNavItem({ to, label, icon, end, badge }) {
+function StudioNavItem({ to, label, icon, end, badge, onNavigate }) {
   return (
     <li>
       <NavLink
         to={to}
         end={end}
+        onClick={onNavigate}
         className={({ isActive }) =>
           `studio-sidebar__link${isActive ? " studio-sidebar__link--active" : ""}`
         }
@@ -98,22 +99,22 @@ function StudioNavItem({ to, label, icon, end, badge }) {
   );
 }
 
-function NavSection({ title, items }) {
+function NavSection({ title, items, onNavigate }) {
   return (
     <div className="studio-sidebar__section">
       <p className="studio-sidebar__section-title">{title}</p>
       <ul className="studio-sidebar__list">
         {items.map((item) => (
-          <StudioNavItem key={item.to} {...item} />
+          <StudioNavItem key={item.to} {...item} onNavigate={onNavigate} />
         ))}
       </ul>
     </div>
   );
 }
 
-export default function StudioSidebar() {
+export default function StudioSidebar({ onNavigate }) {
   return (
-    <aside className="studio-sidebar">
+    <aside id="studio-sidebar" className="studio-sidebar" aria-label="TikTok Studio">
       <div className="studio-sidebar__brand">
         <svg viewBox="0 0 118 42" height="28" width="78" aria-label="TikTok Studio" className="studio-sidebar__logo">
           <path fill="#25F4EE" d="M9.875 16.842v-1.119A9 9 0 0 0 8.7 15.64c-4.797-.006-8.7 3.9-8.7 8.708a8.7 8.7 0 0 0 3.718 7.134A8.68 8.68 0 0 1 1.38 25.55c0-4.737 3.794-8.598 8.495-8.707" />
@@ -123,7 +124,7 @@ export default function StudioSidebar() {
         <span className="studio-sidebar__brand-text">Studio</span>
       </div>
 
-      <NavLink to="/upload" className="studio-sidebar__upload-btn">
+      <NavLink to="/upload" className="studio-sidebar__upload-btn" onClick={onNavigate}>
         <span className="studio-sidebar__upload-icon" aria-hidden>
           +
         </span>
@@ -131,12 +132,12 @@ export default function StudioSidebar() {
       </NavLink>
 
       <nav className="studio-sidebar__nav">
-        <NavSection title="QUẢN LÝ" items={MANAGE_NAV} />
-        <NavSection title="CÔNG CỤ" items={TOOLS_NAV} />
-        <NavSection title="KHÁC" items={OTHER_NAV} />
+        <NavSection title="QUẢN LÝ" items={MANAGE_NAV} onNavigate={onNavigate} />
+        <NavSection title="CÔNG CỤ" items={TOOLS_NAV} onNavigate={onNavigate} />
+        <NavSection title="KHÁC" items={OTHER_NAV} onNavigate={onNavigate} />
       </nav>
 
-      <NavLink to="/" className="studio-sidebar__back">
+      <NavLink to="/" className="studio-sidebar__back" onClick={onNavigate}>
         <i className="fa-solid fa-arrow-left" aria-hidden />
         Quay lại TikTok
       </NavLink>

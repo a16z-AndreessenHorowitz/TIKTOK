@@ -7,6 +7,7 @@ function VideoShareAction({ count, onClick }) {
       iconClassName="fa-solid fa-share"
       count={count}
       onClick={onClick}
+      variant="share"
     />
   );
 }

@@ -16,8 +16,7 @@
 }
 
 .VideoActionBox__profile,
-.VideoActionBox__avatar-btn,
-.VideoActionBox__action {
+.VideoActionBox__avatar-btn {
   border: 0;
   padding: 0;
   background: transparent;
@@ -98,68 +97,6 @@
   gap: 12px;
 }
 
-.VideoActionBox__action {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 74px;
-}
-
-.VideoActionBox__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: #f1f1f2;
-  color: #161823;
-  font-size: 24px;
-  line-height: 1;
-  transition:
-    background 0.16s ease,
-    transform 0.16s ease;
-}
-
-.VideoActionBox__action:hover .VideoActionBox__icon {
-  background: #e9e9eb;
-  transform: translateY(-1px);
-}
-
-.VideoActionBox__action--active .VideoActionBox__icon {
-  background: #161823;
-  color: #fff;
-}
-
-.VideoActionBox__action--active[aria-label="Thích"] .VideoActionBox__icon {
-  background: rgba(254, 44, 85, 0.12);
-  color: #fe2c55;
-}
-
-.VideoActionBox__action--active[aria-label="Lưu"] .VideoActionBox__icon {
-  background: rgba(250, 206, 21, 0.15);
-  color: #face15;
-}
-
-.VideoActionBox__action[aria-label="Lưu"] .VideoActionBox__icon i {
-  transform: translateY(1.5px);
-}
-
-.VideoActionBox__count {
-  display: block;
-  width: 100%;
-  min-height: 18px;
-  margin-top: 6px;
-  overflow: hidden;
-  color: #5c5f66;
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.15;
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 @media (max-width: 767px) {
   .VideoActionBox {
     --mobile-action-column-width: 58px;
@@ -201,40 +138,4 @@
     width: var(--mobile-action-column-width);
   }
 
-  .VideoActionBox__action {
-    width: var(--mobile-action-column-width);
-  }
-
-  .VideoActionBox__icon {
-    width: var(--mobile-action-column-width);
-    height: 42px;
-    background: transparent;
-    color: #fff;
-    font-size: 30px;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
-  }
-
-  .VideoActionBox__count {
-    color: #fff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
-  }
-
-  .VideoActionBox__action:hover .VideoActionBox__icon {
-    background: transparent;
-    transform: none;
-  }
-
-  .VideoActionBox__action--active .VideoActionBox__icon,
-  .VideoActionBox__action--active[aria-label="Thích"] .VideoActionBox__icon,
-  .VideoActionBox__action--active[aria-label="Lưu"] .VideoActionBox__icon {
-    background: transparent;
-  }
-
-  .VideoActionBox__action--active[aria-label="Thích"] .VideoActionBox__icon {
-    color: #fe2c55;
-  }
-
-  .VideoActionBox__action--active[aria-label="Lưu"] .VideoActionBox__icon {
-    color: #face15;
-  }
 }

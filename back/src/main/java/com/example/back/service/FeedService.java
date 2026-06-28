@@ -1,8 +1,5 @@
 package com.example.back.service;
 
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -29,6 +26,7 @@ public class FeedService {
   private static final int DEFAULT_FEED_LIMIT = 8;
   private static final int MAX_FEED_LIMIT = 20;
   private static final int MAX_EXCLUDED_VIDEO_IDS = 200;
+  private static final String RANDOM_FEED_NEXT_CURSOR = "random";
 
   private final VideoRepository videoRepository;
   private final FollowRepository followRepository;
@@ -37,33 +35,27 @@ public class FeedService {
 
   @Transactional(readOnly = true)
   public VideoFeedResponseDTO getFeed(
-      String cursor, Integer limit, Long viewerUserId, String rawExcludedVideoIds) {
+      String ignoredCursor, Integer limit, Long viewerUserId, String rawExcludedVideoIds) {
     int pageSize = clampLimit(limit);
-    FeedCursor feedCursor = parseCursor(cursor);
     List<Long> excludedVideoIds = parseExcludedVideoIds(rawExcludedVideoIds);
     List<VideoEntity> candidates =
-        videoRepository.findFeedPage(
+        videoRepository.findRandomFeedPage(
             viewerUserId,
             excludedVideoIds,
-            feedCursor.createdAt(),
-            feedCursor.id(),
             pageSize + 1,
             true);
 
     if (candidates.isEmpty() && viewerUserId != null) {
       candidates =
-          videoRepository.findFeedPage(
+          videoRepository.findRandomFeedPage(
               null,
               excludedVideoIds,
-              feedCursor.createdAt(),
-              feedCursor.id(),
               pageSize + 1,
               false);
     }
 
     boolean hasMore = candidates.size() > pageSize;
     List<VideoEntity> page = hasMore ? candidates.subList(0, pageSize) : candidates;
-    VideoEntity cursorVideo = !page.isEmpty() ? page.get(page.size() - 1) : null;
 
     Set<Long> followedAuthorIds = findFollowedAuthorIds(viewerUserId, page);
     Set<Long> likedVideoIds = findLikedVideoIds(viewerUserId, page);
@@ -74,7 +66,7 @@ public class FeedService {
             page.stream()
                 .map(video -> toFeedItem(video, viewerUserId, followedAuthorIds, likedVideoIds, savedVideoIds))
                 .toList())
-        .nextCursor(hasMore ? encodeCursor(cursorVideo) : null)
+        .nextCursor(hasMore ? RANDOM_FEED_NEXT_CURSOR : null)
         .build();
   }
 
@@ -212,42 +204,7 @@ public class FeedService {
         .toList();
   }
 
-  private static FeedCursor parseCursor(String cursor) {
-    if (cursor == null || cursor.isBlank()) {
-      return FeedCursor.empty();
-    }
-
-    try {
-      String decoded =
-          new String(Base64.getUrlDecoder().decode(cursor), StandardCharsets.UTF_8);
-      String[] parts = decoded.split("\\|", 2);
-      if (parts.length != 2) {
-        throw new IllegalArgumentException("Cursor không hợp lệ.");
-      }
-      return new FeedCursor(LocalDateTime.parse(parts[0]), Long.parseLong(parts[1]));
-    } catch (RuntimeException ex) {
-      throw new IllegalArgumentException("Cursor không hợp lệ.");
-    }
-  }
-
-  private String encodeCursor(VideoEntity video) {
-    if (video == null || video.getCreatedAt() == null || video.getId() == null) {
-      return null;
-    }
-
-    String raw = video.getCreatedAt() + "|" + video.getId();
-    return Base64.getUrlEncoder()
-        .withoutPadding()
-        .encodeToString(raw.getBytes(StandardCharsets.UTF_8));
-  }
-
   private static long defaultLong(Long value) {
     return value != null ? value : 0L;
-  }
-
-  private record FeedCursor(LocalDateTime createdAt, Long id) {
-    private static FeedCursor empty() {
-      return new FeedCursor(null, null);
-    }
   }
 }

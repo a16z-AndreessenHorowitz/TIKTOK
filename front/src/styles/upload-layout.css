@@ -1,0 +1,42 @@
+.upload-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: #f8f8f8;
+}
+
+.upload-page__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 32px 100px;
+}
+
+.upload-page__grid {
+  display: grid;
+  grid-template-columns: minmax(360px, 7fr) minmax(240px, 3fr);
+  gap: 24px;
+  width: 100%;
+  max-width: 1160px;
+  margin-bottom: 32px;
+}
+
+.upload-meta-panel,
+.upload-preview-side {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.upload-preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.upload-preview-progress {
+  margin-top: 12px;
+}

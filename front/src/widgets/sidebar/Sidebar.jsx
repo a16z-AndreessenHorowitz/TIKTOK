@@ -13,7 +13,7 @@ import { saveSessionFromAuthData } from "../../features/auth/model/authSession"
 import { consumeToast } from "../../shared/lib/toastSession"
 import { getUserAvatarSrc } from "../../shared/lib/userAvatar"
 import { TikTokIconSmall } from "./tiktok-icon"
-import "./Sidebar.css"
+import "../../styles/Sidebar.css"
 
 function IconQr() {
   return (

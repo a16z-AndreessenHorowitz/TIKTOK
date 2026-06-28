@@ -1,0 +1,14 @@
+.profile-page {
+  width: min(100%, 1280px);
+  min-height: 100vh;
+  padding: 48px 44px 80px;
+  color: #161823;
+  background: #fff;
+}
+
+.profile-page--center {
+  display: grid;
+  place-items: center;
+  color: rgba(22, 24, 35, 0.58);
+  font-weight: 700;
+}

@@ -1,0 +1,106 @@
+.VideoActionButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 74px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.VideoActionButton__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #f1f1f2;
+  color: #161823;
+  font-size: 24px;
+  line-height: 1;
+  transition:
+    background 0.16s ease,
+    transform 0.16s ease;
+}
+
+.VideoActionButton:hover .VideoActionButton__icon {
+  background: #e9e9eb;
+  transform: translateY(-1px);
+}
+
+.VideoActionButton--active .VideoActionButton__icon {
+  background: #161823;
+  color: #fff;
+}
+
+.VideoActionButton--like.VideoActionButton--active .VideoActionButton__icon {
+  background: rgba(254, 44, 85, 0.12);
+  color: #fe2c55;
+}
+
+.VideoActionButton--save.VideoActionButton--active .VideoActionButton__icon {
+  background: rgba(250, 206, 21, 0.15);
+  color: #face15;
+}
+
+.VideoActionButton--save .VideoActionButton__icon i {
+  transform: translateY(1.5px);
+}
+
+.VideoActionButton__count {
+  display: block;
+  width: 100%;
+  min-height: 18px;
+  margin-top: 6px;
+  overflow: hidden;
+  color: #5c5f66;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .VideoActionButton {
+    width: var(--mobile-action-column-width, 58px);
+  }
+
+  .VideoActionButton__icon {
+    width: var(--mobile-action-column-width, 58px);
+    height: 42px;
+    background: transparent;
+    color: #fff;
+    font-size: 30px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+  }
+
+  .VideoActionButton__count {
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  }
+
+  .VideoActionButton:hover .VideoActionButton__icon {
+    background: transparent;
+    transform: none;
+  }
+
+  .VideoActionButton--active .VideoActionButton__icon,
+  .VideoActionButton--like.VideoActionButton--active .VideoActionButton__icon,
+  .VideoActionButton--save.VideoActionButton--active .VideoActionButton__icon {
+    background: transparent;
+  }
+
+  .VideoActionButton--like.VideoActionButton--active .VideoActionButton__icon {
+    color: #fe2c55;
+  }
+
+  .VideoActionButton--save.VideoActionButton--active .VideoActionButton__icon {
+    color: #face15;
+  }
+}

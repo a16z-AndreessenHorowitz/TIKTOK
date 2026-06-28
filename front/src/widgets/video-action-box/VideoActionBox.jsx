@@ -1,4 +1,4 @@
-import "./VideoActionBox.css";
+import "../../styles/VideoActionBox.css";
 
 import VideoCommentAction from "../../features/video-actions/components/VideoCommentAction";
 import VideoLikeAction from "../../features/video-actions/components/VideoLikeAction";

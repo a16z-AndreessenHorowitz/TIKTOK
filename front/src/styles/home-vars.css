@@ -1,0 +1,6 @@
+:root {
+  --comments-panel-width: clamp(250px, 25vw, 400px);
+  --comments-panel-margin: 10px;
+  --comments-open-feed-inset: 20px;
+  --landscape-video-y-margin: 74px;
+}

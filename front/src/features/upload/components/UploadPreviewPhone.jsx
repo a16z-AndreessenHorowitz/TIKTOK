@@ -1,10 +1,26 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import "../../../styles/UploadPreviewPhone.css";
 
 export default function UploadPreviewPhone({ previewUrl, description = "" }) {
   const videoRef = useRef(null);
   const [videoLayout, setVideoLayout] = useState({ previewUrl: null, fit: "cover" });
+  const [isPlaying, setIsPlaying] = useState(false);
   const videoFit = videoLayout.previewUrl === previewUrl ? videoLayout.fit : "cover";
   const caption = description.trim() || "";
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !previewUrl) return undefined;
+
+    video.currentTime = 0;
+    video.muted = false;
+    video.volume = 1;
+    video.play().catch(() => {});
+
+    return () => {
+      video.pause();
+    };
+  }, [previewUrl]);
 
   if (!previewUrl) return null;
 
@@ -23,7 +39,15 @@ export default function UploadPreviewPhone({ previewUrl, description = "" }) {
     if (!video) return;
 
     if (video.paused) {
+      video.muted = false;
+      video.volume = 1;
       video.play().catch(() => {});
+      return;
+    }
+
+    if (video.muted) {
+      video.muted = false;
+      video.volume = 1;
       return;
     }
 
@@ -62,10 +86,22 @@ export default function UploadPreviewPhone({ previewUrl, description = "" }) {
         <video
           ref={videoRef}
           src={previewUrl}
+          autoPlay
+          loop
           playsInline
+          preload="auto"
           onLoadedMetadata={updateVideoFit}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
           className={`upload-preview-phone__video upload-preview-phone__video--${videoFit}`}
         />
+        {!isPlaying ? (
+          <span className="upload-preview-phone__play" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7L8 5Z" />
+            </svg>
+          </span>
+        ) : null}
       </div>
 
       <div className="upload-preview-phone__footer">

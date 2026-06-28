@@ -9,7 +9,7 @@ import VideoCommentPanel from "../../features/comments/components/VideoCommentPa
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import { openLoginModal } from "../../features/auth/model/authUi";
 import VideoActionBox from "../../widgets/video-action-box/VideoActionBox";
-import "./HomePage.css";
+import "../../styles/HomePage.css";
 
 const FEED_AUDIO_KEY = "tt_feed_audio";
 const FEED_PAGE_LIMIT = 8;
@@ -22,6 +22,28 @@ const DEFAULT_FEED_AUDIO = {
   muted: true,
   lastVolume: 0.8,
 };
+
+function clampAudioVolume(value, fallback = DEFAULT_FEED_AUDIO.volume) {
+  const volume = Number(value);
+  return Number.isFinite(volume) ? Math.min(Math.max(volume, 0), 1) : fallback;
+}
+
+function normalizeFeedAudio(feedAudio = DEFAULT_FEED_AUDIO) {
+  const volume = clampAudioVolume(feedAudio.volume);
+  const lastVolume = clampAudioVolume(feedAudio.lastVolume, DEFAULT_FEED_AUDIO.lastVolume);
+  const hasAudibleVolume = volume > 0;
+
+  return {
+    volume,
+    muted: Boolean(feedAudio.muted) || !hasAudibleVolume,
+    lastVolume: lastVolume > 0 ? lastVolume : DEFAULT_FEED_AUDIO.lastVolume,
+  };
+}
+
+function isFeedAudioMuted(feedAudio) {
+  const audio = normalizeFeedAudio(feedAudio);
+  return audio.muted || audio.volume <= 0;
+}
 
 /** Khóa list React — id có thể trùng/null */
 function clipListKey(video, index) {
@@ -101,23 +123,14 @@ function readFeedAudio() {
     if (!raw) return DEFAULT_FEED_AUDIO;
 
     const parsed = JSON.parse(raw);
-    const volume = Number(parsed.volume);
-    const lastVolume = Number(parsed.lastVolume);
-
-    return {
-      volume: Number.isFinite(volume) ? Math.min(Math.max(volume, 0), 1) : DEFAULT_FEED_AUDIO.volume,
-      muted: Boolean(parsed.muted),
-      lastVolume: Number.isFinite(lastVolume)
-        ? Math.min(Math.max(lastVolume, 0), 1)
-        : DEFAULT_FEED_AUDIO.lastVolume,
-    };
+    return normalizeFeedAudio(parsed);
   } catch {
     return DEFAULT_FEED_AUDIO;
   }
 }
 
 function saveFeedAudio(feedAudio) {
-  sessionStorage.setItem(FEED_AUDIO_KEY, JSON.stringify(feedAudio));
+  sessionStorage.setItem(FEED_AUDIO_KEY, JSON.stringify(normalizeFeedAudio(feedAudio)));
 }
 
 function isMobileFeedViewport() {
@@ -127,6 +140,15 @@ function isMobileFeedViewport() {
 
 function getPlaybackVolume(feedAudio) {
   return isMobileFeedViewport() ? 1 : feedAudio.volume;
+}
+
+function isVolumeControlEvent(event) {
+  const target = event?.target;
+  return (
+    typeof Element !== "undefined" &&
+    target instanceof Element &&
+    Boolean(target.closest(".volume-box"))
+  );
 }
 
 
@@ -224,6 +246,7 @@ export default function Home() {
   const mobileAudioUnlockedRef = useRef(false);
   const mobileAudioUnlockingRef = useRef(false);
   const mobileAudioUnlockAttemptRef = useRef(0);
+  const soundPointerHandledRef = useRef(false);
 
   useEffect(() => {
     isLoggedInRef.current = isLoggedIn;
@@ -663,12 +686,84 @@ export default function Home() {
     });
   }, [flushVideoInteraction]);
 
-  const applyAudioToVideo = useCallback((video, index, audio = feedAudioRef.current) => {
+  const applyAudioToVideo = useCallback((
+    video,
+    index,
+    audio = feedAudioRef.current,
+    activeVideoIndex = activeIndexRef.current,
+  ) => {
     if (!video) return;
-    const isActiveVideo = index === activeIndexRef.current;
-    video.volume = isActiveVideo ? getPlaybackVolume(audio) : 0;
-    video.muted = !isActiveVideo || audio.muted;
+    const isActiveVideo = index === activeVideoIndex;
+    const normalizedAudio = normalizeFeedAudio(audio);
+    const playbackVolume = isActiveVideo ? getPlaybackVolume(normalizedAudio) : 0;
+    const shouldMute = !isActiveVideo || normalizedAudio.muted || playbackVolume <= 0;
+
+    video.volume = playbackVolume;
+    video.muted = shouldMute;
+
+    if (!shouldMute) {
+      video.removeAttribute("muted");
+      video.defaultMuted = false;
+    }
   }, []);
+
+  const syncFeedAudioToVideos = useCallback((audio, activeVideoIndex = activeIndexRef.current) => {
+    videoRefs.current.forEach((video, index) => {
+      applyAudioToVideo(video, index, audio, activeVideoIndex);
+    });
+  }, [applyAudioToVideo]);
+
+  const commitFeedAudio = useCallback((
+    nextAudio,
+    {
+      activeVideoIndex = activeIndexRef.current,
+      syncActiveVideo = false,
+      retryPlay = false,
+      fallbackToMuted = false,
+    } = {},
+  ) => {
+    const normalizedAudio = normalizeFeedAudio(nextAudio);
+
+    if (Number.isInteger(activeVideoIndex)) {
+      activeIndexRef.current = activeVideoIndex;
+      setActiveIndex((currentIndex) =>
+        currentIndex === activeVideoIndex ? currentIndex : activeVideoIndex,
+      );
+    }
+
+    feedAudioRef.current = normalizedAudio;
+    setFeedAudio(normalizedAudio);
+
+    if (!syncActiveVideo) return;
+
+    syncFeedAudioToVideos(normalizedAudio, activeVideoIndex);
+
+    const video = videoRefs.current[activeVideoIndex];
+    if (!video) return;
+
+    if (!isFeedAudioMuted(normalizedAudio)) {
+      video.removeAttribute("muted");
+      video.defaultMuted = false;
+      video.muted = false;
+      video.volume = getPlaybackVolume(normalizedAudio);
+    }
+
+    if (!retryPlay) return;
+
+    const playPromise = video.play();
+    if (!playPromise?.catch) return;
+
+    playPromise.catch((err) => {
+      if (err?.name !== "NotAllowedError") return;
+      if (!fallbackToMuted) return;
+
+      const mutedAudio = normalizeFeedAudio({ ...normalizedAudio, muted: true });
+      feedAudioRef.current = mutedAudio;
+      setFeedAudio(mutedAudio);
+      syncFeedAudioToVideos(mutedAudio, activeVideoIndex);
+      video.play().catch(() => {});
+    });
+  }, [syncFeedAudioToVideos]);
 
   const playVideo = useCallback((video, index = activeIndexRef.current) => {
     if (!video) return;
@@ -693,12 +788,10 @@ export default function Home() {
       }
 
       const mutedAudio = { ...feedAudioRef.current, muted: true };
-      feedAudioRef.current = mutedAudio;
-      setFeedAudio(mutedAudio);
-      applyAudioToVideo(video, index, mutedAudio);
+      commitFeedAudio(mutedAudio, { syncActiveVideo: true });
       video.play().catch(() => {});
     });
-  }, [applyAudioToVideo, pauseInactiveVideos]);
+  }, [applyAudioToVideo, commitFeedAudio, pauseInactiveVideos]);
 
   const playActiveVideo = useCallback((index = activeIndexRef.current) => {
     const video = videoRefs.current[index];
@@ -885,32 +978,80 @@ export default function Home() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [closeCommentPanel, isCommentPanelOpen]);
 
-  const toggleSound = () => {
-    setFeedAudio((prev) => {
-      if (prev.muted) {
-        const vol = prev.lastVolume > 0 ? prev.lastVolume : 0.8;
-        return { ...prev, muted: false, volume: vol };
-      }
-      return {
-        ...prev,
-        muted: true,
-        lastVolume: prev.volume > 0 ? prev.volume : prev.lastVolume,
-      };
+  const toggleSound = useCallback((index, event) => {
+    if (Number.isInteger(index)) {
+      activeIndexRef.current = index;
+    }
+    event?.stopPropagation?.();
+
+    const prev = normalizeFeedAudio(feedAudioRef.current);
+    const nextAudio = isFeedAudioMuted(prev)
+      ? {
+          ...prev,
+          muted: false,
+          volume: prev.lastVolume > 0 ? prev.lastVolume : DEFAULT_FEED_AUDIO.volume,
+        }
+      : {
+          ...prev,
+          muted: true,
+          lastVolume: prev.volume > 0 ? prev.volume : prev.lastVolume,
+        };
+
+    commitFeedAudio(nextAudio, {
+      activeVideoIndex: Number.isInteger(index) ? index : activeIndexRef.current,
+      syncActiveVideo: true,
+      retryPlay: !nextAudio.muted,
+      fallbackToMuted: !nextAudio.muted,
     });
-  };
+  }, [commitFeedAudio]);
 
-  const handleVolumeChange = (e) => {
+  const handleSoundPointerDown = useCallback((index, event) => {
+    if (event.pointerType === "mouse") return;
+
+    soundPointerHandledRef.current = true;
+    event.preventDefault();
+    toggleSound(index, event);
+  }, [toggleSound]);
+
+  const handleSoundClick = useCallback((index, event) => {
+    if (soundPointerHandledRef.current) {
+      soundPointerHandledRef.current = false;
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    toggleSound(index, event);
+  }, [toggleSound]);
+
+  const handleVolumeChange = useCallback((index, e) => {
     const v = parseFloat(e.target.value);
-    setFeedAudio((prev) => ({
+    const nextVolume = Number.isFinite(v) ? Math.min(Math.max(v, 0), 1) : DEFAULT_FEED_AUDIO.volume;
+    const prev = normalizeFeedAudio(feedAudioRef.current);
+    const nextAudio = {
       ...prev,
-      volume: v,
-      muted: v === 0,
-      lastVolume: v > 0 ? v : prev.lastVolume,
-    }));
-  };
+      volume: nextVolume,
+      muted: nextVolume === 0,
+      lastVolume: nextVolume > 0 ? nextVolume : prev.lastVolume,
+    };
 
-  const unlockMobileFeedAudio = useCallback(() => {
-    if (!isMobileFeedViewport() || mobileAudioUnlockedRef.current) return;
+    commitFeedAudio(nextAudio, {
+      activeVideoIndex: Number.isInteger(index) ? index : activeIndexRef.current,
+      syncActiveVideo: true,
+      retryPlay: nextVolume > 0,
+      fallbackToMuted: nextVolume > 0,
+    });
+  }, [commitFeedAudio]);
+
+  const unlockMobileFeedAudio = useCallback((event) => {
+    if (isVolumeControlEvent(event)) return;
+    if (
+      !isMobileFeedViewport() ||
+      mobileAudioUnlockedRef.current ||
+      mobileAudioUnlockingRef.current
+    ) {
+      return;
+    }
 
     const video = videoRefs.current[activeIndexRef.current];
     if (!video) return;
@@ -920,8 +1061,7 @@ export default function Home() {
     mobileAudioUnlockingRef.current = true;
 
     const mobileAudio = { ...feedAudioRef.current, volume: 1, muted: false, lastVolume: 1 };
-    feedAudioRef.current = mobileAudio;
-    setFeedAudio(mobileAudio);
+    commitFeedAudio(mobileAudio);
 
     video.pause();
     video.removeAttribute("muted");
@@ -953,12 +1093,10 @@ export default function Home() {
 
       mobileAudioUnlockedRef.current = false;
       const mutedAudio = { ...mobileAudio, muted: true };
-      feedAudioRef.current = mutedAudio;
-      setFeedAudio(mutedAudio);
-      applyAudioToVideo(video, activeIndexRef.current, mutedAudio);
+      commitFeedAudio(mutedAudio, { syncActiveVideo: true });
       video.play().catch(() => {});
     });
-  }, [applyAudioToVideo]);
+  }, [applyAudioToVideo, commitFeedAudio]);
 
   const markVideoReady = (rowKey) => {
     setFailedVideos((prev) => {
@@ -1038,6 +1176,7 @@ export default function Home() {
   // =========================
   const commentPanelVideo = isCommentPanelOpen ? videos[activeIndex] : null;
   const showCommentPanel = Boolean(commentPanelVideo);
+  const isSoundMuted = isFeedAudioMuted(feedAudio);
 
   return (
     <>
@@ -1072,7 +1211,6 @@ export default function Home() {
                         src={video.videoUrl}
                         loop
                         playsInline
-                        muted={index !== activeIndex || feedAudio.muted}
                         preload={index === activeIndex ? "auto" : "metadata"}
                         onLoadedMetadata={(e) => {
                           updateVideoRatio(rowKey, e.currentTarget);
@@ -1138,10 +1276,11 @@ export default function Home() {
                           <button
                             type="button"
                             className="volume-box__btn"
-                            onClick={toggleSound}
-                            aria-label={feedAudio.muted ? "Bật tiếng" : "Tắt tiếng"}
+                            onPointerDown={(event) => handleSoundPointerDown(index, event)}
+                            onClick={(event) => handleSoundClick(index, event)}
+                            aria-label={isSoundMuted ? "Bật tiếng" : "Tắt tiếng"}
                           >
-                            {feedAudio.muted ? (
+                            {isSoundMuted ? (
                               <i className="fa-solid fa-volume-xmark" aria-hidden />
                             ) : (
                               <i className="fa-solid fa-volume-high" aria-hidden />
@@ -1155,7 +1294,7 @@ export default function Home() {
                             max="1"
                             step="0.05"
                             value={feedAudio.volume}
-                            onChange={handleVolumeChange}
+                            onChange={(event) => handleVolumeChange(index, event)}
                             aria-label="Âm lượng"
                           />
                         </div>

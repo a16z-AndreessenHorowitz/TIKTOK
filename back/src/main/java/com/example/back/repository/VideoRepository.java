@@ -1,6 +1,5 @@
 package com.example.back.repository;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -99,11 +98,9 @@ public class VideoRepository {
         .executeUpdate();
   }
 
-  public List<VideoEntity> findFeedPage(
+  public List<VideoEntity> findRandomFeedPage(
       Long viewerUserId,
       List<Long> excludedVideoIds,
-      LocalDateTime cursorCreatedAt,
-      Long cursorId,
       int limit,
       boolean excludeViewedVideos) {
     List<String> predicates = new ArrayList<>();
@@ -125,16 +122,6 @@ public class VideoRepository {
           """);
     }
 
-    if (cursorCreatedAt != null && cursorId != null) {
-      predicates.add(
-          """
-          (
-            v.createdAt < :cursorCreatedAt
-            OR (v.createdAt = :cursorCreatedAt AND v.id < :cursorId)
-          )
-          """);
-    }
-
     String whereClause = "WHERE " + String.join("\nAND ", predicates) + "\n";
 
     var query =
@@ -146,7 +133,7 @@ public class VideoRepository {
             """
                 + whereClause
                 + """
-            ORDER BY v.createdAt DESC, v.id DESC
+            ORDER BY function('RAND')
             """,
             VideoEntity.class);
 
@@ -155,10 +142,6 @@ public class VideoRepository {
     }
     if (viewerUserId != null && excludeViewedVideos) {
       query.setParameter("viewerUserId", viewerUserId);
-    }
-    if (cursorCreatedAt != null && cursorId != null) {
-      query.setParameter("cursorCreatedAt", cursorCreatedAt);
-      query.setParameter("cursorId", cursorId);
     }
 
     return query.setMaxResults(limit).getResultList();

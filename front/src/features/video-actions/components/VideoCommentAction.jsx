@@ -8,6 +8,7 @@ function VideoCommentAction({ count, onClick, active = false }) {
       count={count}
       onClick={onClick}
       active={active}
+      variant="comment"
     />
   );
 }

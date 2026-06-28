@@ -1,0 +1,318 @@
+.upload-preview-phone {
+  --video-frame-width: 274px;
+  --phone-width: var(--video-frame-width);
+  --phone-height: 620px;
+  --phone-top-height: 70px;
+  --video-frame-height: 392px;
+
+  box-sizing: border-box;
+  width: min(100%, var(--phone-width));
+  height: var(--phone-height);
+  margin: 0 auto;
+  padding: 1px 2px 1px;
+  background: #000;
+  border-radius: 19px;
+  display: grid;
+  grid-template-rows: var(--phone-top-height) var(--video-frame-height) 1fr;
+  gap: 0;
+  align-items: center;
+  justify-items: stretch;
+  overflow: hidden;
+}
+
+.upload-preview-phone__top {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 14px 12px 12px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.upload-preview-phone__status,
+.upload-preview-phone__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.upload-preview-phone__status {
+  padding: 0 28px;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.upload-preview-phone__status-icons {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.upload-preview-phone__status-icons svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+}
+
+.upload-preview-phone__battery {
+  width: 20px;
+  height: 10px;
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  position: relative;
+}
+
+.upload-preview-phone__battery::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.upload-preview-phone__battery::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  right: -5px;
+  width: 2px;
+  height: 4px;
+  border-radius: 0 2px 2px 0;
+  background: currentColor;
+}
+
+.upload-preview-phone__nav {
+  padding-bottom: 4px;
+}
+
+.upload-preview-phone__live {
+  width: 34px;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+}
+
+.upload-preview-phone__feed-tabs {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 14px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.52);
+}
+
+.upload-preview-phone__feed-tabs strong {
+  color: #fff;
+  font: inherit;
+  position: relative;
+}
+
+.upload-preview-phone__feed-tabs strong::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  width: 20px;
+  height: 2px;
+  border-radius: 999px;
+  background: #fff;
+  transform: translateX(-50%);
+}
+
+.upload-preview-phone__search {
+  width: 27px;
+  height: 27px;
+  fill: #fff;
+}
+
+.upload-preview-phone__video-frame {
+  position: relative;
+  width: 100%;
+  height: var(--video-frame-height);
+  max-width: 100%;
+  max-height: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.upload-preview-phone__play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.upload-preview-phone__play svg {
+  width: 58px;
+  height: 58px;
+  padding: 13px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.38);
+  fill: currentColor;
+}
+
+.upload-preview-phone__video {
+  width: 100%;
+  height: 100%;
+  background: #000;
+  object-position: center;
+}
+
+.upload-preview-phone__video--cover {
+  object-fit: cover;
+}
+
+.upload-preview-phone__video--contain {
+  object-fit: contain;
+}
+
+.upload-preview-phone__footer {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 0;
+  padding: 16px 12px 10px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.upload-preview-phone__details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.upload-preview-phone__copy {
+  min-width: 0;
+}
+
+.upload-preview-phone__author,
+.upload-preview-phone__caption,
+.upload-preview-phone__sound {
+  margin: 0;
+}
+
+.upload-preview-phone__author {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #fff;
+}
+
+.upload-preview-phone__caption {
+  margin-top: 5px;
+  font-size: 13px;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.9);
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.upload-preview-phone__sound {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #fff;
+}
+
+.upload-preview-phone__sound svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  fill: currentColor;
+}
+
+.upload-preview-phone__sound span {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upload-preview-phone__record {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  margin-left: auto;
+  border-radius: 50%;
+  background:
+    linear-gradient(45deg, transparent 45%, rgba(255, 255, 255, 0.16) 50%, transparent 55%),
+    radial-gradient(circle at 50% 50%, #050505 0 28%, #242424 29% 100%);
+}
+
+.upload-preview-phone__tabs {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: end;
+  gap: 4px;
+}
+
+.upload-preview-phone__tab {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.upload-preview-phone__tab svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+
+.upload-preview-phone__tab span {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upload-preview-phone__tab--active {
+  color: #fff;
+}
+
+.upload-preview-phone__create {
+  justify-self: center;
+  width: 44px;
+  height: 28px;
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, #00f2ea 0 20%, transparent 20% 80%, #ff0050 80% 100%),
+    #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-preview-phone__create svg {
+  width: 22px;
+  height: 22px;
+  fill: #111;
+}

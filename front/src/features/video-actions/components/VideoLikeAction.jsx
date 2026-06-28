@@ -8,6 +8,7 @@ function VideoLikeAction({ count, active = false, onClick }) {
       count={count}
       active={active}
       onClick={onClick}
+      variant="like"
     />
   );
 }

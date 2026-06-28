@@ -1,0 +1,126 @@
+.studio-layout {
+  display: flex;
+  min-height: 100dvh;
+  background: #f8f8f8;
+  color: #161823;
+}
+
+.studio-mobile-menu,
+.studio-sidebar-backdrop {
+  display: none;
+}
+
+.studio-main {
+  flex: 1;
+  min-width: 0;
+  margin-left: 240px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.studio-placeholder {
+  padding: 48px 32px;
+  text-align: center;
+}
+
+.studio-placeholder h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+
+.studio-placeholder p {
+  color: rgba(22, 24, 35, 0.65);
+  margin: 0 0 16px;
+}
+
+.studio-placeholder a {
+  color: #fe2c55;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+@media (max-width: 767px) {
+  .studio-layout {
+    display: block;
+  }
+
+  .studio-main {
+    margin-left: 0;
+    min-height: 100dvh;
+    padding-top: 56px;
+  }
+
+  .studio-mobile-menu {
+    position: fixed;
+    top: max(10px, env(safe-area-inset-top));
+    left: 12px;
+    z-index: 320;
+    width: 42px;
+    height: 42px;
+    border: 1px solid rgba(22, 24, 35, 0.12);
+    border-radius: 10px;
+    background: #fff;
+    color: #161823;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+    cursor: pointer;
+  }
+
+  .studio-mobile-menu__bar {
+    width: 18px;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+
+  .studio-layout--sidebar-open .studio-mobile-menu__bar:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+
+  .studio-layout--sidebar-open .studio-mobile-menu__bar:nth-child(2) {
+    opacity: 0;
+  }
+
+  .studio-layout--sidebar-open .studio-mobile-menu__bar:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  .studio-sidebar {
+    width: min(82vw, 300px);
+    transform: translateX(calc(-100% - 16px));
+    transition: transform 0.22s ease;
+    z-index: 260;
+    box-shadow: 14px 0 34px rgba(15, 23, 42, 0.16);
+  }
+
+  .studio-layout--sidebar-open .studio-sidebar {
+    transform: translateX(0);
+  }
+
+  .studio-sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 240;
+    display: block;
+    border: 0;
+    background: rgba(22, 24, 35, 0.38);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .studio-layout--sidebar-open .studio-sidebar-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .studio-placeholder {
+    padding: 28px 16px;
+  }
+}
